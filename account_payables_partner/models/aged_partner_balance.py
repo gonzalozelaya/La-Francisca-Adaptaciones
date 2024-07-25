@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 import datetime
 
-from odoo import models, fields, _
+from odoo import models, fields, _, api
 from odoo.tools.misc import format_date
-
-from dateutil.relativedelta import relativedelta
-from itertools import chain
 
 class AgedPartnerBalanceCustomHandler(models.AbstractModel):
     _inherit = 'account.aged.partner.balance.report.handler'
