@@ -1,18 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
-
 from odoo import models, fields, _, api
 from odoo.tools.misc import format_date
-
-class AgedPartnerBalanceCustomHandler(models.AbstractModel):
-# -*- coding: utf-8 -*-
-# Part of Odoo. See LICENSE file for full copyright and licensing details.
-
-import datetime
-
-from odoo import models, fields, _
-from odoo.tools.misc import format_date
-
 from dateutil.relativedelta import relativedelta
 from itertools import chain
 
