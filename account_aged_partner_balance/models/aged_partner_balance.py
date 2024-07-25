@@ -75,7 +75,7 @@ class AgedPartnerBalanceCustomHandler(models.AbstractModel):
     def _report_custom_engine_aged_payable_new(self, expressions, options, date_scope, current_groupby, next_groupby, offset=0, limit=None, warnings=None):
         return self._aged_partner_report_custom_engine_common(options, 'liability_payable', current_groupby, next_groupby, offset=offset, limit=limit)
 
-    def _aged_partner_report_custom_engine_common_new(self, options, internal_type, current_groupby, next_groupby, offset=0, limit=None):
+    def _aged_partner_report_custom_engine_common(self, options, internal_type, current_groupby, next_groupby, offset=0, limit=None):
         report = self.env['account.report'].browse(options['report_id'])
         report._check_groupby_fields((next_groupby.split(',') if next_groupby else []) + ([current_groupby] if current_groupby else []))
 
