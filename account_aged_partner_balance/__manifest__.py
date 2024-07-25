@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "Añadir extra a Reportes a pagar/cobrar",
+    'name': "Añadir Contacto a Reportes a pagar/cobrar",
 
     'summary': """
-        Short (1 phrase/line) summary of the module's purpose, used as
-        subtitle on modules listing or apps.openerp.com""",
+        Este módulo permite agregar la columna Contacto al reporte de cuentas a Pagar y cuentas a Cobrar""",
 
     'description': """
-        Long description of module's purpose
+        Este módulo permite agregar la columna Contacto al reporte de cuentas a Pagar y cuentas a Cobrar
     """,
 
     'author': "OutsourceArg SAS",
@@ -18,7 +17,7 @@
     # Check https://github.com/odoo/odoo/blob/master/odoo/addons/base/module/module_data.xml
     # for the full list
     'category': 'Accounting',
-    'version': '0.1',
+    'version': '1.0',
 
     # any module necessary for this one to work correctly
     'depends': ['account','account_reports'],
