@@ -1,0 +1,48 @@
+<odoo>
+  <data>
+     <record id="view_account_ddjj_form" model="ir.ui.view">
+        <field name="name">account.ddjj.form</field>
+        <field name="model">account.ddjj</field>
+        <field name="arch" type="xml">
+            <form string="Account DDJJ">
+                <header>
+                    <button name="export_txt" type="object" string="Exportar TXT" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="date_range"/>
+                        <field name="municipalidad"/>
+                        <field name="apunte_ids"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_account_ddjj_tree" model="ir.ui.view">
+        <field name="name">account.ddjj.tree</field>
+        <field name="model">account.ddjj</field>
+        <field name="arch" type="xml">
+            <tree string="Account DDJJ">
+                <field name="name"/>
+                <field name="date_range"/>
+                <field name="municipalidad"/>
+            </tree>
+        </field>
+    </record>
+
+    <menuitem id="account_account_menu" name="Contabilidad" sequence="1" parent="account.menu_finance_entries"/>
+
+    <!-- Menú de subcategoría en contabilidad -->
+    <menuitem id="menu_account_ddjj" name="DDJJ" parent="account_account_menu" sequence="10"/>
+
+    <act_window
+        id="action_account_ddjj"
+        name="Account DDJJ"
+        res_model="account.ddjj"
+        view_mode="tree,form"
+        menu_id="menu_account_ddjj"
+    />
+  </data>
+</odoo>
