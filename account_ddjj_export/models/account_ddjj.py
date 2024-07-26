@@ -1,13 +1,14 @@
 from odoo import models, fields, api
 import base64
 from io import StringIO
+from datetime import datetime
 
 class AccountDDJJ(models.Model):
     _name = 'account.ddjj'
     _description = 'Modelo para DDJJ de cuentas'
 
     name = fields.Char(string='Nombre', required=True)
-    date_start = fields.Date(string='Fecha Inicio', required=True)
+    date_start = fields.Date(string='Fecha Inicio', required=True,default=lambda self: fields.Date.to_string(datetime(datetime.now().year, datetime.now().month, 1)))
     date_end = fields.Date(string='Fecha Fin', required=True)
     municipalidad = fields.Selection(
         selection=[
@@ -29,7 +30,7 @@ class AccountDDJJ(models.Model):
         store=True,)
     
     
-    @api.depends('date_range', 'municipalidad')
+    @api.depends('date_start', 'municipalidad')
     def _compute_apunte_ids(self):
         if self.municipalidad == 'Jujuy':
             account_code = '2.1.3.02.150'
