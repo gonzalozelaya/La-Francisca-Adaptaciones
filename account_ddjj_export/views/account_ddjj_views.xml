@@ -1,5 +1,5 @@
 <odoo>
-     <record id="view_account_ddjj_form" model="ir.ui.view">
+    <record id="view_account_ddjj_form" model="ir.ui.view">
         <field name="name">account.ddjj.form</field>
         <field name="model">account.ddjj</field>
         <field name="arch" type="xml">
@@ -20,6 +20,7 @@
         </field>
     </record>
 
+    <!-- Vista de lista para el modelo account.ddjj -->
     <record id="view_account_ddjj_tree" model="ir.ui.view">
         <field name="name">account.ddjj.tree</field>
         <field name="model">account.ddjj</field>
@@ -27,6 +28,7 @@
             <tree string="Account DDJJ">
                 <field name="name"/>
                 <field name="date_start"/>
+                <field name="date_end"/>
                 <field name="municipalidad"/>
             </tree>
         </field>
