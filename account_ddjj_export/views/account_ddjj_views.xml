@@ -1,46 +1,50 @@
 <odoo>
-    <record id="view_account_ddjj_form" model="ir.ui.view">
-        <field name="name">account.ddjj.form</field>
-        <field name="model">account.ddjj</field>
-        <field name="arch" type="xml">
-            <form string="Account DDJJ">
-                <header>
-                    <button name="export_txt" type="object" string="Exportar TXT" class="btn-primary"/>
-                </header>
-                <sheet>
-                    <group>
-                        <field name="name"/>
-                        <field name="date_start"/>
-                        <field name="date_end"/>
-                        <field name="municipalidad"/>
-                        <field name="apunte_ids"/>
-                    </group>
-                </sheet>
-            </form>
-        </field>
+  <data>
+    <!-- Vista de formulario para el modelo account.ddjj -->
+    <record model="ir.ui.view" id="view_account_ddjj_form">
+      <field name="name">account.ddjj.form</field>
+      <field name="model">account.ddjj</field>
+      <field name="arch" type="xml">
+        <form string="Account DDJJ">
+          <header>
+            <button name="export_txt" type="object" string="Exportar TXT" class="btn-primary"/>
+          </header>
+          <sheet>
+            <group>
+              <field name="name"/>
+              <field name="date_start"/>
+              <field name="date_end"/>
+              <field name="municipalidad"/>
+              <field name="apunte_ids"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
     </record>
 
     <!-- Vista de lista para el modelo account.ddjj -->
-    <record id="view_account_ddjj_tree" model="ir.ui.view">
-        <field name="name">account.ddjj.tree</field>
-        <field name="model">account.ddjj</field>
-        <field name="arch" type="xml">
-            <tree string="Account DDJJ">
-                <field name="name"/>
-                <field name="date_start"/>
-                <field name="date_end"/>
-                <field name="municipalidad"/>
-            </tree>
-        </field>
+    <record model="ir.ui.view" id="view_account_ddjj_tree">
+      <field name="name">account.ddjj.tree</field>
+      <field name="model">account.ddjj</field>
+      <field name="arch" type="xml">
+        <tree string="Account DDJJ">
+          <field name="name"/>
+          <field name="date_start"/>
+          <field name="date_end"/>
+          <field name="municipalidad"/>
+        </tree>
+      </field>
     </record>
 
-   <menuitem id="menu_account_ddjj" name="DDJJ" sequence="10"/> 
+    <!-- Acción para el modelo account.ddjj -->
+    <record model="ir.actions.act_window" id="action_account_ddjj">
+      <field name="name">Account DDJJ</field>
+      <field name="res_model">account.ddjj</field>
+      <field name="view_mode">tree,form</field>
+    </record>
 
-    <act_window
-        id="action_account_ddjj"
-        name="Account DDJJ"
-        res_model="account.ddjj"
-        view_mode="tree,form"
-        menu_id="menu_account_ddjj"
-    />
+    <!-- Menú de contabilidad -->
+    <menuitem id="menu_account_ddjj_root" name="DDJJ" parent="account.menu_finance" sequence="10"/>
+    <menuitem id="menu_account_ddjj" name="DDJJ" parent="menu_account_ddjj_root" action="action_account_ddjj"/>
+  </data>
 </odoo>
