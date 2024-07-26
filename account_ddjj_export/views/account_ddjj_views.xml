@@ -1,5 +1,4 @@
 <odoo>
-  <data>
      <record id="view_account_ddjj_form" model="ir.ui.view">
         <field name="name">account.ddjj.form</field>
         <field name="model">account.ddjj</field>
@@ -45,5 +44,4 @@
         view_mode="tree,form"
         menu_id="menu_account_ddjj"
     />
-  </data>
 </odoo>
