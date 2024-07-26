@@ -34,10 +34,7 @@
         </field>
     </record>
 
-    <menuitem id="account_account_menu" name="Contabilidad" sequence="1" parent="account.menu_finance_entries"/>
-
-    <!-- Menú de subcategoría en contabilidad -->
-    <menuitem id="menu_account_ddjj" name="DDJJ" parent="account_account_menu" sequence="10"/>
+    <menuitem id="menu_account_ddjj" name="DDJJ" parent="account.menu_finance" sequence="10"/>
 
     <act_window
         id="action_account_ddjj"
