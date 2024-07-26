@@ -13,11 +13,12 @@
     'author': "AAAAAAAAA",
     'website': "http://www.yourcompany.com",
     'installable': True,
+    'application':True,
 
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/master/odoo/addons/base/module/module_data.xml
     # for the full list
-    'category': 'Uncategorized',
+    'category': 'Accounting',
     'version': '0.1',
 
     # any module necessary for this one to work correctly
@@ -26,5 +27,4 @@
     'data': [
         'views/account_ddjj_views.xml',
     ],
-    'application':True,
 }

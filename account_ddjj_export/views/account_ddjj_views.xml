@@ -34,7 +34,7 @@
         </field>
     </record>
 
-   <!-- <menuitem id="menu_account_ddjj" name="DDJJ" parent="account.menu_finance" sequence="10"/> 
+   <menuitem id="menu_account_ddjj" name="DDJJ" sequence="10"/> 
 
     <act_window
         id="action_account_ddjj"
@@ -42,5 +42,5 @@
         res_model="account.ddjj"
         view_mode="tree,form"
         menu_id="menu_account_ddjj"
-    />-->
+    />
 </odoo>
