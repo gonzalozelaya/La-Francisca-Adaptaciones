@@ -27,7 +27,7 @@
         <field name="arch" type="xml">
             <tree string="Account DDJJ">
                 <field name="name"/>
-                <field name="date_range"/>
+                <field name="date_start"/>
                 <field name="municipalidad"/>
             </tree>
         </field>
