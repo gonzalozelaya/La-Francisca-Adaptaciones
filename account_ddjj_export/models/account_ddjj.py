@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, Command, _
 import base64
 from io import StringIO
 from datetime import datetime
@@ -32,23 +32,20 @@ class AccountDDJJ(models.Model):
     
     @api.depends('date_start', 'municipalidad')
     def _compute_apunte_ids(self):
-        
-        account_code = False
-        
-        if self.municipalidad == 'Jujuy':
-            account_code = '2.1.3.02.150'
-        elif self.municipalidad == 'Caba':
-            account_code = '2.1.3.02.030'
-        elif self.municipalidad == 'Tucuman':
-            account_code = '2.1.3.02.310'
-        
-        if account_code:
-            AccountMoveLine = self.env['account.move.line']
-            # Buscar apuntes contables con el código de cuenta especificado
-            account_move_lines = AccountMoveLine.search([('account_id.code', '=', account_code)])
+        for rec in self:
+            account_code = False
             
-            # Asignar los apuntes contables encontrados al campo many2many
-            self.apunte_ids = [(6, 0, account_move_lines.ids)]
+            if self.municipalidad == 'Jujuy':
+                account_code = '2.1.3.02.150'
+            elif self.municipalidad == 'Caba':
+                account_code = '2.1.3.02.030'
+            elif self.municipalidad == 'Tucuman':
+                account_code = '2.1.3.02.310'
+            
+            if account_code:               
+                rec.apunte_ids = [Command.clear(), Command.set(self.env['account.move.line'].search([('account_id.code', '=', account_code),('date', '>=', rec.date_start)] ).ids)] 
+                # Asignar los apuntes contables encontrados al campo many2many
+                
 
     def export_txt(self):
         # Crear un buffer en memoria para el contenido del archivo
