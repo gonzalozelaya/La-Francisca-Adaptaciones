@@ -35,11 +35,11 @@ class AccountDDJJ(models.Model):
         for rec in self:
             account_code = False
             
-            if self.municipalidad == 'Jujuy':
+            if self.municipalidad == 'jujuy':
                 account_code = '2.1.3.02.150'
-            elif self.municipalidad == 'Caba':
+            elif self.municipalidad == 'caba':
                 account_code = '2.1.3.02.030'
-            elif self.municipalidad == 'Tucuman':
+            elif self.municipalidad == 'tucuman':
                 account_code = '2.1.3.02.310'
             
             if account_code:               
