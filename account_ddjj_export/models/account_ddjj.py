@@ -7,7 +7,8 @@ class AccountDDJJ(models.Model):
     _description = 'Modelo para DDJJ de cuentas'
 
     name = fields.Char(string='Nombre', required=True)
-    date_range = fields.DateRange(string='Fechas', required=True)
+    date_start = fields.Date(string='Fecha Inicio', required=True)
+    date_end = fields.Date(string='Fecha Fin', required=True)
     municipalidad = fields.Selection(
         selection=[
             ('jujuy', 'Jujuy'),

@@ -11,7 +11,8 @@
                 <sheet>
                     <group>
                         <field name="name"/>
-                        <field name="date_range"/>
+                        <field name="date_start"/>
+                        <field name="date_end"/>
                         <field name="municipalidad"/>
                         <field name="apunte_ids"/>
                     </group>
