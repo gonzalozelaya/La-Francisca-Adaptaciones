@@ -32,6 +32,9 @@ class AccountDDJJ(models.Model):
     
     @api.depends('date_start', 'municipalidad')
     def _compute_apunte_ids(self):
+        
+        account_code = False
+        
         if self.municipalidad == 'Jujuy':
             account_code = '2.1.3.02.150'
         elif self.municipalidad == 'Caba':
@@ -39,12 +42,13 @@ class AccountDDJJ(models.Model):
         elif self.municipalidad == 'Tucuman':
             account_code = '2.1.3.02.310'
         
-        AccountMoveLine = self.env['account.move.line']
-        # Buscar apuntes contables con el código de cuenta especificado
-        account_move_lines = AccountMoveLine.search([('account_id.code', '=', account_code)])
-        
-        # Asignar los apuntes contables encontrados al campo many2many
-        self.apunte_ids = [(6, 0, account_move_lines.ids)]
+        if account_code:
+            AccountMoveLine = self.env['account.move.line']
+            # Buscar apuntes contables con el código de cuenta especificado
+            account_move_lines = AccountMoveLine.search([('account_id.code', '=', account_code)])
+            
+            # Asignar los apuntes contables encontrados al campo many2many
+            self.apunte_ids = [(6, 0, account_move_lines.ids)]
 
     def export_txt(self):
         # Crear un buffer en memoria para el contenido del archivo
