@@ -58,7 +58,7 @@ class AccountDDJJ(models.Model):
             for line in record.apunte_ids:
                 invoice = line.move_id.name if line.move_id else ''
                 payments = line.payment_id.name if line.payment_id else ''
-                output.write(f"{record.name}\t{record.date_range.start}\t{record.date_range.end}\t{record.municipalidad}\t{line.account_id.code}\t{invoice}\t{payments}\n")
+                output.write(f"{record.name}\t{record.date_start}\t{record.date_end}\t{record.municipalidad}\t{line.account_id.code}\t{invoice}\t{payments}\n")
         
         # Obtener el contenido del archivo
         file_content = output.getvalue()
