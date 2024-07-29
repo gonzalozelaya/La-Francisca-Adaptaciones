@@ -33,18 +33,18 @@ class AccountDDJJ(models.Model):
     @api.depends('date_start','date_end','municipalidad')
     def _compute_apunte_ids(self):
         for rec in self:
-            account_code = False
+            account_code = []
             if self.municipalidad == 'sicore':
-                account_code ='2.1.3.04.020'
+                account_code =['2.1.3.04.020']
             if self.municipalidad == 'jujuy':
-                account_code = '2.1.3.02.150'
+                account_code = ['2.1.3.02.150']
             elif self.municipalidad == 'caba':
-                account_code = '2.1.3.02.030'
+                account_code = ['2.1.3.02.030','2.1.3.02.040']
             elif self.municipalidad == 'tucuman':
-                account_code = '2.1.3.02.310'
+                account_code = ['2.1.3.02.310']
             
             if account_code:               
-                rec.apunte_ids = [Command.clear(), Command.set(self.env['account.move.line'].search([('account_id.code', '=', account_code),('move_id.state', '!=', 'draft'),('date', '>=', rec.date_start),('date', '<=', rec.date_end)] ).ids)] 
+                rec.apunte_ids = [Command.clear(), Command.set(self.env['account.move.line'].search([('account_id.code', 'in', account_code),('move_id.state', '!=', 'draft'),('date', '>=', rec.date_start),('date', '<=', rec.date_end)] ).ids)] 
                 # Asignar los apuntes contables encontrados al campo many2many
                 
 
@@ -101,9 +101,19 @@ class DDJJExport:
             formatted_line += 'A'                                               #Tipo de operación
             formatted_line += str(comprobante.sequence_number).rjust(16,'0')    #Número de comprobante
             formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).rjust(10,'0')           #Fecha de comprobante
-            formatted_line += str(comprobante.payment_total).replace('.',',').rjust(16,'0')      #Monto de comprobante
-            formatted_line += str(self.buscar_nro_certificado(comprobante,53)).split('-')[-1].rjust(16,'0')     #Nro de certificado propio
+            formatted_line += '{:.2f}'.format(comprobante.payment_total).replace('.', ',').rjust(16, '0')      #Monto de comprobante
+            formatted_line += str(self.buscar_nro_certificado(comprobante,53)).split('-')[-1].rjust(16,' ')     #Nro de certificado propio
+            formatted_line += str(self.tipo_de_identificacion(apunte.partner_id))   #Tipo de identificacion 1:CDI/2:CUIL/3:CUIT
+            formatted_line += str(self.nro_de_identificacion(apunte.partner_id)).ljust(11,'0')
+            #Nro de identificacion
             
+            formatted_line += str(self.nro_de_identificacion(apunte.partner_id)).rjust(11,'0')    #Nro de identificacion
+            formatted_line += str(self.situacion_ib(apunte.partner_id))         #Situacion IB
+            formatted_line += str(self.nro_ib()(apunte.partner_id)).rjust(11,'0')  #Nro IB
+            formatted_line += str(self.situacion_iva(apunte.partner_id))        #Situacion IVA
+            formatted_line += str(self.razon_social(apunte.partner_id)).ljust(30,' ') #Razon social
+            #formatted_line += '{:.2f}'.format(0).replace('.', ',').rjust(16, '0') #Importe otros conceptos
+            #formatted_line += '{:.2f}'.format().replace('.', ',').rjust(16, '0') #Importe IVA            
             formatted_lines.append(formatted_line)
             
         return "\n".join(formatted_lines)
@@ -126,4 +136,31 @@ class DDJJExport:
             if line.tax_id.tax_group_id.id == taxgroup:
                 cert = line.name
         return cert
- 
+    
+    def tipo_de_identificacion(self,contacto):
+        if contacto.l10n_latam_identification_type_id.name == 'CUIT':
+            return 3
+        elif contacto.l10n_latam_identification_type_id.name == 'CUIL':
+            return 2
+        else: 
+            return 1
+    def nro_de_identificacion(self,contacto):
+        return contacto.vat
+    def situacion_ib(self,contacto):
+        if contacto.l10n_ar_gross_income_type == 'local':
+            return 1
+        if contacto.l10n_ar_gross_income_type == 'multilateral':
+            return 2
+        else :
+            return 4
+    def nro_ib(self,contacto):
+        return contacto.l10n_ar_gross_income_number or '0'
+    def situacion_iva(self,contacto):
+        if contacto.l10n_ar_afip_responsibility_type_id.name == 'Responsable Monotributo':
+            return 4
+        elif contacto.l10n_ar_afip_responsibility_type_id.name == 'IVA Sujeto Exento':
+            return 3
+        else:
+            return 1
+    def razon_social(self,contacto):
+        return contacto.name
