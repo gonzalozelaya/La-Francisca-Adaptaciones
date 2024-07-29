@@ -116,8 +116,8 @@ class DDJJExport:
         return txt_content
     def buscar_nro_certificado(self,pago,taxgroup):
         cert = ''
-        for line in pago:
-            if line.tax_id.tax_group_id.id == 53:
+        for line in pago.l10n_ar_withholding_line_ids:
+            if line.tax_id.tax_group_id.id == taxgroup:
                 cert = line.name
         return cert
  
