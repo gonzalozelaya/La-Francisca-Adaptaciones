@@ -141,7 +141,7 @@ class DDJJExport:
             return factura.l10n_latam_document_type_id.l10n_ar_letter
     
     def tipoOperacion(self,apunte):
-        if apunte.tax_line_id.type_tax_use == 'sale'
+        if apunte.tax_line_id.type_tax_use == 'sale':
             return 2
         else: 
             return 1
