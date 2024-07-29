@@ -92,7 +92,7 @@ class DDJJExport:
 
     def format_line(self, record):
         for apunte in record.apunte_ids:
-            comprobante = apunte.move_id
+            comprobante = apunte.move_id.payment_id
             
             formatted_line = '1'                                            #Tipo de Operación 1:Retencion/2:Percepción
             formatted_line += '029'                                         #Código de norma
