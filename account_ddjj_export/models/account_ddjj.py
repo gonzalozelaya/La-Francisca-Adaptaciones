@@ -89,8 +89,10 @@ class AccountDDJJ(models.Model):
 class DDJJExport:
     def __init__(self, record):
         self.record = record
-
+    
     def format_line(self, record):
+        formatted_lines = []
+        
         for apunte in record.apunte_ids:
             comprobante = apunte.move_id.payment_id
             formatted_line = '1'                                                #Tipo de Operación 1:Retencion/2:Percepción
@@ -100,8 +102,11 @@ class DDJJExport:
             formatted_line += str(comprobante.sequence_number).rjust(16,'0')    #Número de comprobante
             formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).rjust(10,'0')           #Fecha de comprobante
             formatted_line += str(comprobante.payment_total).replace('.',',').rjust(16,'0')      #Monto de comprobante
-            formatted_line += str(self.buscar_nro_certificado(comprobante,53)).rjust(16,'0')     #Nro de certificado propio
-        return formatted_line
+            formatted_line += str(self.buscar_nro_certificado(comprobante,53)).split('-')[-1].rjust(16,'0')     #Nro de certificado propio
+            
+            formatted_lines.append(formatted_line)
+            
+        return "\n".join(formatted_lines)
     
     def format_jujuy(self, record):
         return
@@ -113,6 +118,8 @@ class DDJJExport:
     def export_to_txt(self):
         txt_content = self.format_line(self.record)
         return txt_content
+    
+    
     def buscar_nro_certificado(self,pago,taxgroup):
         cert = ''
         for line in pago.l10n_ar_withholding_line_ids:
