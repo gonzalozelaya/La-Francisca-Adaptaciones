@@ -113,10 +113,11 @@ class DDJJExport:
             formatted_line += str(self.situacionIb(apunte.partner_id))         #Situacion IB
             formatted_line += str(self.nroIb(apunte.partner_id)).rjust(11,'0')  #Nro IB
             formatted_line += str(self.situacionIva(apunte.partner_id))        #Situacion IVA
-            formatted_line += str(self.razonSocial(apunte.partner_id)).ljust(30,' ') #Razon social
+            formatted_line += (str(self.razonSocial(apunte.partner_id))[:30] if len(str(self.razonSocial(apunte.partner_id))) > 30 else str(self.razonSocial(apunte.partner_id))).ljust(30, ' ') #Razon social
             formatted_line += '{:.2f}'.format(0).replace('.', ',').rjust(16, '0') #Importe otros conceptos 
             formatted_line += '{:.2f}'.format(self.ImporteIva(apunte,tipo_operacion)).replace('.', ',').rjust(16, '0') #Importe IVA 
-            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,tipo_operacion)).replace('.', ',').rjust(16, '0') #Monto sujeto a retención (Neto) 
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0') #Monto sujeto a retención (Neto) 
+            formatted_line += '{:.2f}'.format(self.montoRetenido(comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0') #Alicuota
              
             formatted_lines.append(formatted_line)
             
@@ -223,9 +224,28 @@ class DDJJExport:
                     if 'IVA' in tax.name:
                         iva_amount += line.debit - line.credit
             return iva_amount
-    def montoSujetoARetencion(self,comprobante,tipo_operacion):
+    def montoSujetoARetencion(self,comprobante,taxgroup,tipo_operacion):
         if tipo_operacion == 1:
-            return comprobante.matched_amount_untaxed
+            retenido = 0
+            for line in comprobante.l10n_ar_withholding_line_ids:
+                if line.tax_id.tax_group_id.id == taxgroup:
+                    retenido = line.amount
+            return retenido
         else:
             return comprobante.amount_untaxed
-             
+    def porcentajeAlicuota(self,comprobante,tipo_operacion):
+        if tipo_operacion == 1:
+            return
+        return
+
+    def montoRetenido(self,comprobante,taxgroup,tipo_operacion):
+        if tipo_operacion == 1:
+            retenido = 0
+            base = 0
+            for line in comprobante.l10n_ar_withholding_line_ids:
+                if line.tax_id.tax_group_id.id == taxgroup:
+                    retenido = line.amount
+                    base = line.base_amount
+            return (retenido / base) * 100
+        else:
+            return (comprobante.amount_tax / comprobante.amount_untaxed) * 100
