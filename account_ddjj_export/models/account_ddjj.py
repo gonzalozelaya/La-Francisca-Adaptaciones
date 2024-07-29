@@ -95,7 +95,7 @@ class DDJJExport:
         
         for apunte in record.apunte_ids:
             comprobante = apunte.move_id.payment_id
-            tipo_operacion = self.tipoOperacion(self,apunte)
+            tipo_operacion = self.tipoOperacion(apunte)
             formatted_line = str(tipo_operacion)                                                #Tipo de Operación 1:Retencion/2:Percepción
             formatted_line += '029'                                             #Código de norma
             formatted_line += str(apunte.date.strftime('%d/%m/%Y')).rjust(10)   #Fecha de Retención/Percepción
@@ -120,11 +120,13 @@ class DDJJExport:
             formatted_lines.append(formatted_line)
             
         return "\n".join(formatted_lines)
-    
+    #Pendiente
     def format_jujuy(self, record):
         return
+    #Pendiente
     def format_sicore(seld, record):
         return
+    #Pendiente
     def format_tucuman(self, record):
         return
 
@@ -203,5 +205,7 @@ class DDJJExport:
                     if 'IVA' in tax.name:
                         iva_amount += line.debit - line.credit
             return iva_amount
-    
+    def montoSujetoARetencion(self,apunte):
+        
+        return
              
