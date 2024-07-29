@@ -12,9 +12,9 @@ class AccountDDJJ(models.Model):
     date_end = fields.Date(string='Fecha Fin', required=True, default=lambda self: fields.Date.today())
     municipalidad = fields.Selection(
         selection=[
+            ('sicore', 'SICORE'),
+            ('caba', 'AGIP (Caba)'),
             ('jujuy', 'Jujuy'),
-            ('salta', 'Salta'),
-            ('caba', 'CABA'),
             ('tucuman', 'Tucumán')
         ],
         string='Municipalidad',
@@ -34,7 +34,8 @@ class AccountDDJJ(models.Model):
     def _compute_apunte_ids(self):
         for rec in self:
             account_code = False
-            
+            if self.municipalidad == 'sicore':
+                account_code ='2.1.3.04.020'
             if self.municipalidad == 'jujuy':
                 account_code = '2.1.3.02.150'
             elif self.municipalidad == 'caba':
@@ -43,7 +44,7 @@ class AccountDDJJ(models.Model):
                 account_code = '2.1.3.02.310'
             
             if account_code:               
-                rec.apunte_ids = [Command.clear(), Command.set(self.env['account.move.line'].search([('account_id.code', '=', account_code),('date', '>=', rec.date_start)] ).ids)] 
+                rec.apunte_ids = [Command.clear(), Command.set(self.env['account.move.line'].search([('account_id.code', '=', account_code),('date', '>=', rec.date_start),('date', '<=', rec.date_end)] ).ids)] 
                 # Asignar los apuntes contables encontrados al campo many2many
                 
 
@@ -90,18 +91,20 @@ class DDJJExport:
         self.record = record
 
     def format_line(self, record):
-        formatted_line = ""
-        formatted_line += record.name.ljust(50)  # Suponiendo que 'name' es un campo de longitud 50
-        formatted_line += record.date_start.strftime("%Y%m%d")  # Fecha inicio en formato YYYYMMDD
-        formatted_line += record.date_end.strftime("%Y%m%d")  # Fecha fin en formato YYYYMMDD
-        formatted_line += record.municipalidad.ljust(30)  # Municipalidad de longitud 30
-        
         for apunte in record.apunte_ids:
+            formatted_line += '01'
             formatted_line += apunte.account_id.code.ljust(20)  # Código de cuenta de longitud 20
             formatted_line += str(apunte.debit).rjust(15, '0')  # Débito de longitud 15, rellenado con ceros
             formatted_line += str(apunte.credit).rjust(15, '0')  # Crédito de longitud 15, rellenado con ceros
         
         return formatted_line
+    
+    def format_jujuy(self, record):
+        return
+    def format_sicore(seld, record):
+        return
+    def format_tucuman(self, record):
+        return
 
     def export_to_txt(self):
         txt_content = self.format_line(self.record)
