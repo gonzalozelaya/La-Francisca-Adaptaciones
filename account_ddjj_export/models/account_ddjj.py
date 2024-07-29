@@ -152,11 +152,11 @@ class DDJJExport:
             return '01'
         else:
             factura = apunte.move_id
-            if factura.l10n_latam_document_type_id.interna_type == 'Invoice':
+            if factura.l10n_latam_document_type_id.internal_type == 'Invoice':
                 return '01'
-            elif factura.l10n_latam_document_type_id.interna_type == 'Debit Notes':
+            elif factura.l10n_latam_document_type_id.internal_type == 'Debit Notes':
                 return '02'
-            elif factura.l10n_latam_document_type_id.interna_type == 'Credit Notes':
+            elif factura.l10n_latam_document_type_id.internal_type == 'Credit Notes':
                 return '09'
             else:
                 return '00'   
