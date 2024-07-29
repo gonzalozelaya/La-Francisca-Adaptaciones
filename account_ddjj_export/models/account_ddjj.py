@@ -117,7 +117,9 @@ class DDJJExport:
             formatted_line += '{:.2f}'.format(0).replace('.', ',').rjust(16, '0') #Importe otros conceptos 
             formatted_line += '{:.2f}'.format(self.ImporteIva(apunte,tipo_operacion)).replace('.', ',').rjust(16, '0') #Importe IVA 
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0') #Monto sujeto a retención (Neto) 
-            formatted_line += '{:.2f}'.format(self.montoRetenido(comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0') #Alicuota
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0') #Alicuota
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0')
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0')
              
             formatted_lines.append(formatted_line)
             
@@ -233,12 +235,9 @@ class DDJJExport:
             return retenido
         else:
             return comprobante.amount_untaxed
-    def porcentajeAlicuota(self,comprobante,tipo_operacion):
-        if tipo_operacion == 1:
-            return
-        return
 
-    def montoRetenido(self,comprobante,taxgroup,tipo_operacion):
+
+    def porcentajeAlicuota(self,comprobante,taxgroup,tipo_operacion):
         if tipo_operacion == 1:
             retenido = 0
             base = 0
@@ -249,3 +248,16 @@ class DDJJExport:
             return (retenido / base) * 100
         else:
             return (comprobante.amount_tax / comprobante.amount_untaxed) * 100
+        
+    def montoRetenido(self,apunte,comprobante,taxgroup,tipo_operacion):
+        if tipo_operacion == 1:
+            retenido = 0
+            for line in comprobante.l10n_ar_withholding_line_ids:
+                if line.tax_id.tax_group_id.id == taxgroup:
+                    retenido = line.amount
+            return retenido
+        else:
+            if apunte.credit > 0:
+                return apunte.credit
+            else:
+                return apunte.debit
