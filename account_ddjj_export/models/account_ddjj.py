@@ -92,11 +92,13 @@ class DDJJExport:
 
     def format_line(self, record):
         for apunte in record.apunte_ids:
-            formatted_line += '01'
+            formatted_line = '1'                          #Tipo de Operación 1:Retencion/2:Percepción
+            formatted_line += '029'                        #Código de norma
+            formatted_line += str(apunte.date).ljust(10)   #Fecha de Retención/Percepción
+            formatted_line += 'A'                         #Tipo de operación
             formatted_line += apunte.account_id.code.ljust(20)  # Código de cuenta de longitud 20
             formatted_line += str(apunte.debit).rjust(15, '0')  # Débito de longitud 15, rellenado con ceros
             formatted_line += str(apunte.credit).rjust(15, '0')  # Crédito de longitud 15, rellenado con ceros
-        
         return formatted_line
     
     def format_jujuy(self, record):
