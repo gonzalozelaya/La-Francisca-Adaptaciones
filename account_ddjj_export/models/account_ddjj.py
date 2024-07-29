@@ -178,11 +178,12 @@ class DDJJExport:
             else:
                 return '00'   
     
-    def buscarNroCertificado(self,pago,taxgroup):
+    def buscarNroCertificado(self,pago,taxgroup,tipo_operacion):
         cert = ''
-        for line in pago.l10n_ar_withholding_line_ids:
-            if line.tax_id.tax_group_id.id == taxgroup:
-                cert = line.name
+        if tipo_operacion == 1:  
+            for line in pago.l10n_ar_withholding_line_ids:
+                if line.tax_id.tax_group_id.id == taxgroup:
+                    cert = line.name
         return cert
     
     def tipodeIdentificacion(self,contacto):
