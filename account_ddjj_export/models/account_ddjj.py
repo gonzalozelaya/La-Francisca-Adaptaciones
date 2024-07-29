@@ -44,7 +44,7 @@ class AccountDDJJ(models.Model):
                 account_code = '2.1.3.02.310'
             
             if account_code:               
-                rec.apunte_ids = [Command.clear(), Command.set(self.env['account.move.line'].search([('account_id.code', '=', account_code),('date', '>=', rec.date_start),('date', '<=', rec.date_end)] ).ids)] 
+                rec.apunte_ids = [Command.clear(), Command.set(self.env['account.move.line'].search([('account_id.code', '=', account_code),('move_id.state', '!=', 'draft'),('date', '>=', rec.date_start),('date', '<=', rec.date_end)] ).ids)] 
                 # Asignar los apuntes contables encontrados al campo many2many
                 
 
@@ -92,13 +92,16 @@ class DDJJExport:
 
     def format_line(self, record):
         for apunte in record.apunte_ids:
-            formatted_line = '1'                          #Tipo de Operación 1:Retencion/2:Percepción
-            formatted_line += '029'                        #Código de norma
-            formatted_line += str(apunte.date).ljust(10)   #Fecha de Retención/Percepción
-            formatted_line += 'A'                         #Tipo de operación
-            formatted_line += apunte.account_id.code.ljust(20)  # Código de cuenta de longitud 20
-            formatted_line += str(apunte.debit).rjust(15, '0')  # Débito de longitud 15, rellenado con ceros
-            formatted_line += str(apunte.credit).rjust(15, '0')  # Crédito de longitud 15, rellenado con ceros
+            comprobante = record.move_id
+            
+            formatted_line = '1'                                            #Tipo de Operación 1:Retencion/2:Percepción
+            formatted_line += '029'                                         #Código de norma
+            formatted_line += str(apunte.date).ljust(10)                    #Fecha de Retención/Percepción
+            formatted_line += 'A'                                           #Tipo de operación
+            formatted_line += str(comprobante.sequence_number).ljust(16,'0')#Número de comprobante
+            formatted_line += str(comprobante.date).ljust(10,'0')           #Fecha de comprobante
+            formatted_line += str(comprobante.payment_total).ljust(16,'0')  #Monto de comprobante
+            formatted_line += str(self.buscar_nro_certificado(comprobante,53)).ljust(16,'0') #Nro de certificado propio
         return formatted_line
     
     def format_jujuy(self, record):
@@ -111,3 +114,10 @@ class DDJJExport:
     def export_to_txt(self):
         txt_content = self.format_line(self.record)
         return txt_content
+    def buscar_nro_certificado(self,pago,taxgroup):
+        cert = ''
+        for line in pago:
+            if line.tax_id.tax_group_id.id == 53:
+                cert = line.name
+        return cert
+ 
