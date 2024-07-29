@@ -64,7 +64,7 @@ class AccountDDJJ(models.Model):
         # Obtener el contenido del archivo
         #file_content = output.getvalue()
         #utput.close()
-        self.ensure_one()  # Asegurarse de que la acción se ejecuta sobre un solo registro
+        #self.ensure_one()  # Asegurarse de que la acción se ejecuta sobre un solo registro
         exporter = DDJJExport(self)
         txt_content = exporter.export_to_txt()
 
@@ -93,15 +93,14 @@ class DDJJExport:
     def format_line(self, record):
         for apunte in record.apunte_ids:
             comprobante = apunte.move_id.payment_id
-            
-            formatted_line = '1'                                            #Tipo de Operación 1:Retencion/2:Percepción
-            formatted_line += '029'                                         #Código de norma
-            formatted_line += str(apunte.date).ljust(10)                    #Fecha de Retención/Percepción
-            formatted_line += 'A'                                           #Tipo de operación
-            formatted_line += str(comprobante.sequence_number).ljust(16,'0')#Número de comprobante
-            formatted_line += str(comprobante.date).ljust(10,'0')           #Fecha de comprobante
-            formatted_line += str(comprobante.payment_total).ljust(16,'0')  #Monto de comprobante
-            formatted_line += str(self.buscar_nro_certificado(comprobante,53)).ljust(16,'0') #Nro de certificado propio
+            formatted_line = '1'                                                #Tipo de Operación 1:Retencion/2:Percepción
+            formatted_line += '029'                                             #Código de norma
+            formatted_line += str(apunte.date.strftime('%d/%m/%Y')).rjust(10)   #Fecha de Retención/Percepción
+            formatted_line += 'A'                                               #Tipo de operación
+            formatted_line += str(comprobante.sequence_number).rjust(16,'0')    #Número de comprobante
+            formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).rjust(10,'0')           #Fecha de comprobante
+            formatted_line += str(comprobante.payment_total).replace('.',',').rjust(16,'0')      #Monto de comprobante
+            formatted_line += str(self.buscar_nro_certificado(comprobante,53)).rjust(16,'0')     #Nro de certificado propio
         return formatted_line
     
     def format_jujuy(self, record):
