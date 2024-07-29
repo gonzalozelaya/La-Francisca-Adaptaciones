@@ -9,7 +9,7 @@ class AccountDDJJ(models.Model):
 
     name = fields.Char(string='Nombre', required=True)
     date_start = fields.Date(string='Fecha Inicio', required=True,default=lambda self: fields.Date.to_string(datetime(datetime.now().year, datetime.now().month, 1)))
-    date_end = fields.Date(string='Fecha Fin', required=True)
+    date_end = fields.Date(string='Fecha Fin', required=True, default=lambda self: fields.Date.today())
     municipalidad = fields.Selection(
         selection=[
             ('jujuy', 'Jujuy'),
@@ -30,7 +30,7 @@ class AccountDDJJ(models.Model):
         store=True,)
     
     
-    @api.depends('date_start', 'municipalidad')
+    @api.depends('date_start','date_end','municipalidad')
     def _compute_apunte_ids(self):
         for rec in self:
             account_code = False
@@ -61,11 +61,14 @@ class AccountDDJJ(models.Model):
                 output.write(f"{record.name}\t{record.date_start}\t{record.date_end}\t{record.municipalidad}\t{line.account_id.code}\t{invoice}\t{payments}\n")
         
         # Obtener el contenido del archivo
-        file_content = output.getvalue()
-        output.close()
+        #file_content = output.getvalue()
+        #utput.close()
+        self.ensure_one()  # Asegurarse de que la acción se ejecuta sobre un solo registro
+        exporter = DDJJExport(self)
+        txt_content = exporter.export_to_txt()
 
         # Codificar el contenido en base64
-        file_content_base64 = base64.b64encode(file_content.encode('utf-8')).decode('utf-8')
+        file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
 
         # Crear un adjunto en Odoo
         attachment = self.env['ir.attachment'].create({
@@ -81,3 +84,25 @@ class AccountDDJJ(models.Model):
             'target': 'self',
         }
         
+        
+class DDJJExport:
+    def __init__(self, record):
+        self.record = record
+
+    def format_line(self, record):
+        formatted_line = ""
+        formatted_line += record.name.ljust(50)  # Suponiendo que 'name' es un campo de longitud 50
+        formatted_line += record.date_start.strftime("%Y%m%d")  # Fecha inicio en formato YYYYMMDD
+        formatted_line += record.date_end.strftime("%Y%m%d")  # Fecha fin en formato YYYYMMDD
+        formatted_line += record.municipalidad.ljust(30)  # Municipalidad de longitud 30
+        
+        for apunte in record.apunte_ids:
+            formatted_line += apunte.account_id.code.ljust(20)  # Código de cuenta de longitud 20
+            formatted_line += str(apunte.debit).rjust(15, '0')  # Débito de longitud 15, rellenado con ceros
+            formatted_line += str(apunte.credit).rjust(15, '0')  # Crédito de longitud 15, rellenado con ceros
+        
+        return formatted_line
+
+    def export_to_txt(self):
+        txt_content = self.format_line(self.record)
+        return txt_content
