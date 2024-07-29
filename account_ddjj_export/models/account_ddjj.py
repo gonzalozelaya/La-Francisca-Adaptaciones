@@ -103,7 +103,7 @@ class DDJJExport:
             formatted_line += str(self.tipoFactura(apunte,tipo_operacion)).rjust(1)                                               #Tipo de operación
             formatted_line += str(comprobante.sequence_number).rjust(16,'0')    #Número de comprobante
             formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).rjust(10,'0')           #Fecha de comprobante
-            formatted_line += '{:.2f}'.format(comprobante.payment_total).replace('.', ',').rjust(16, '0')      #Monto de comprobante
+            formatted_line += '{:.2f}'.format(self.montoComprobante(comprobante,tipo_operacion)).replace('.', ',').rjust(16, '0')      #Monto de comprobante
             formatted_line += str(self.buscarNroCertificado(comprobante,53)).split('-')[-1].rjust(16,' ')     #Nro de certificado propio
             formatted_line += str(self.tipodeIdentificacion(apunte.partner_id))   #Tipo de identificacion 1:CDI/2:CUIL/3:CUIT
             formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).ljust(11,'0')
@@ -116,6 +116,7 @@ class DDJJExport:
             formatted_line += str(self.razonSocial(apunte.partner_id)).ljust(30,' ') #Razon social
             formatted_line += '{:.2f}'.format(0).replace('.', ',').rjust(16, '0') #Importe otros conceptos 
             formatted_line += '{:.2f}'.format(self.ImporteIva(apunte,tipo_operacion)).replace('.', ',').rjust(16, '0') #Importe IVA 
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,tipo_operacion)).replace('.', ',').rjust(16, '0') #Monto sujeto a retención (Neto) 
              
             formatted_lines.append(formatted_line)
             
@@ -221,7 +222,9 @@ class DDJJExport:
                     if 'IVA' in tax.name:
                         iva_amount += line.debit - line.credit
             return iva_amount
-    def montoSujetoARetencion(self,apunte):
-        
-        return
+    def montoSujetoARetencion(self,comprobante,tipo_operacion):
+        if tipo_operacion == 1:
+            return comprobante.matched_amount_untaxed
+        else:
+            return comprobante.amount_untaxed
              
