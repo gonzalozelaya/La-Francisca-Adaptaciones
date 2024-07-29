@@ -145,6 +145,11 @@ class DDJJExport:
             return comprobante.date
         else:
             return comprobante.invoice_date
+    def montoComprobante(self,comprobante,tipo_operacion):
+            if tipo_operacion == 1:
+                return comprobante.matched_amount
+            else:
+                return comprobante.amount_total
     
     def tipoFactura(self,apunte,tipo_operacion):
         if tipo_operacion ==1:
