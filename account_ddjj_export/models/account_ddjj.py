@@ -94,8 +94,8 @@ class DDJJExport:
         formatted_lines = []
         
         for apunte in record.apunte_ids:
-            comprobante = apunte.move_id.payment_id
             tipo_operacion = self.tipoOperacion(apunte)
+            comprobante = self.obtenerComprobante(apunte,tipo_operacion)
             formatted_line = str(tipo_operacion)                                                #Tipo de Operación 1:Retencion/2:Percepción
             formatted_line += '029'                                             #Código de norma
             formatted_line += str(apunte.date.strftime('%d/%m/%Y')).rjust(10)   #Fecha de Retención/Percepción
@@ -134,6 +134,17 @@ class DDJJExport:
         txt_content = self.format_line(self.record)
         return txt_content
     
+    def obtenerComprobante(self,apunte,tipo_operacion):
+        if tipo_operacion == 1:
+            return apunte.move_id.payment_id
+        else:
+            return apunte.move_id
+    
+    def fechaComprobante(self,comprobante,tipo_operacion):
+        if tipo_operacion == 1:
+            return comprobante.date
+        else:
+            return comprobante.invoice_date
     
     def tipoFactura(self,apunte,tipo_operacion):
         if tipo_operacion ==1:
@@ -145,7 +156,7 @@ class DDJJExport:
     def tipoOperacion(self,apunte):
         if apunte.tax_line_id.type_tax_use == 'sale':
             return 2
-        else: 
+        else:
             return 1
     def tipoComprobanteOrigen(self,tipo_operacion, apunte):
         if tipo_operacion == 1:
