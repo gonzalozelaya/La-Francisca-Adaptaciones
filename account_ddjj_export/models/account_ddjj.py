@@ -66,7 +66,7 @@ class AccountDDJJ(models.Model):
         #utput.close()
         #self.ensure_one()  # Asegurarse de que la acción se ejecuta sobre un solo registro
         exporter = DDJJExport(self)
-        txt_content = exporter.export_to_txt()
+        txt_content = exporter.exportToTxt()
 
         # Codificar el contenido en base64
         file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
@@ -95,25 +95,28 @@ class DDJJExport:
         
         for apunte in record.apunte_ids:
             comprobante = apunte.move_id.payment_id
-            formatted_line = '1'                                                #Tipo de Operación 1:Retencion/2:Percepción
+            tipo_operacion = self.tipoOperacion(self,apunte)
+            formatted_line = str(tipo_operacion)                                                #Tipo de Operación 1:Retencion/2:Percepción
             formatted_line += '029'                                             #Código de norma
             formatted_line += str(apunte.date.strftime('%d/%m/%Y')).rjust(10)   #Fecha de Retención/Percepción
-            formatted_line += 'A'                                               #Tipo de operación
+            formatted_line += str(self.tipoComprobanteOrigen(tipo_operacion,apunte)).rjust(2,'0') #Tipo comprobante de Origen
+            formatted_line += str(self.tipoFactura(apunte,tipo_operacion)).rjust(1)                                               #Tipo de operación
             formatted_line += str(comprobante.sequence_number).rjust(16,'0')    #Número de comprobante
             formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).rjust(10,'0')           #Fecha de comprobante
             formatted_line += '{:.2f}'.format(comprobante.payment_total).replace('.', ',').rjust(16, '0')      #Monto de comprobante
-            formatted_line += str(self.buscar_nro_certificado(comprobante,53)).split('-')[-1].rjust(16,' ')     #Nro de certificado propio
-            formatted_line += str(self.tipo_de_identificacion(apunte.partner_id))   #Tipo de identificacion 1:CDI/2:CUIL/3:CUIT
-            formatted_line += str(self.nro_de_identificacion(apunte.partner_id)).ljust(11,'0')
+            formatted_line += str(self.buscarNroCertificado(comprobante,53)).split('-')[-1].rjust(16,' ')     #Nro de certificado propio
+            formatted_line += str(self.tipodeIdentificacion(apunte.partner_id))   #Tipo de identificacion 1:CDI/2:CUIL/3:CUIT
+            formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).ljust(11,'0')
             #Nro de identificacion
             
-            formatted_line += str(self.nro_de_identificacion(apunte.partner_id)).rjust(11,'0')    #Nro de identificacion
-            formatted_line += str(self.situacion_ib(apunte.partner_id))         #Situacion IB
-            formatted_line += str(self.nro_ib()(apunte.partner_id)).rjust(11,'0')  #Nro IB
-            formatted_line += str(self.situacion_iva(apunte.partner_id))        #Situacion IVA
-            formatted_line += str(self.razon_social(apunte.partner_id)).ljust(30,' ') #Razon social
-            #formatted_line += '{:.2f}'.format(0).replace('.', ',').rjust(16, '0') #Importe otros conceptos
-            #formatted_line += '{:.2f}'.format().replace('.', ',').rjust(16, '0') #Importe IVA            
+            formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).rjust(11,'0')    #Nro de identificacion
+            formatted_line += str(self.situacionIb(apunte.partner_id))         #Situacion IB
+            formatted_line += str(self.nroIb(apunte.partner_id)).rjust(11,'0')  #Nro IB
+            formatted_line += str(self.situacionIva(apunte.partner_id))        #Situacion IVA
+            formatted_line += str(self.razonSocial(apunte.partner_id)).ljust(30,' ') #Razon social
+            formatted_line += '{:.2f}'.format(0).replace('.', ',').rjust(16, '0') #Importe otros conceptos 
+            formatted_line += '{:.2f}'.format(self.ImporteIva(apunte,tipo_operacion)).replace('.', ',').rjust(16, '0') #Importe IVA 
+             
             formatted_lines.append(formatted_line)
             
         return "\n".join(formatted_lines)
@@ -125,42 +128,80 @@ class DDJJExport:
     def format_tucuman(self, record):
         return
 
-    def export_to_txt(self):
+    def exportToTxt(self):
         txt_content = self.format_line(self.record)
         return txt_content
     
     
-    def buscar_nro_certificado(self,pago,taxgroup):
+    def tipoFactura(self,apunte,tipo_operacion):
+        if tipo_operacion ==1:
+            return ' '
+        else:
+            factura = apunte.move_id
+            return factura.l10n_latam_document_type_id.l10n_ar_letter
+    
+    def tipoOperacion(self,apunte):
+        if apunte.tax_line_id.type_tax_use == 'sale'
+            return 2
+        else: 
+            return 1
+    def tipoComprobanteOrigen(self,tipo_operacion, apunte):
+        if tipo_operacion == 1:
+            return '01'
+        else:
+            factura = apunte.move_id
+            if factura.l10n_latam_document_type_id.interna_type == 'Invoice':
+                return '01'
+            elif factura.l10n_latam_document_type_id.interna_type == 'Debit Notes':
+                return '02'
+            elif factura.l10n_latam_document_type_id.interna_type == 'Credit Notes':
+                return '09'
+            else:
+                return '00'   
+    
+    def buscarNroCertificado(self,pago,taxgroup):
         cert = ''
         for line in pago.l10n_ar_withholding_line_ids:
             if line.tax_id.tax_group_id.id == taxgroup:
                 cert = line.name
         return cert
     
-    def tipo_de_identificacion(self,contacto):
+    def tipodeIdentificacion(self,contacto):
         if contacto.l10n_latam_identification_type_id.name == 'CUIT':
             return 3
         elif contacto.l10n_latam_identification_type_id.name == 'CUIL':
             return 2
         else: 
             return 1
-    def nro_de_identificacion(self,contacto):
+    def nrodeIdentificacion(self,contacto):
         return contacto.vat
-    def situacion_ib(self,contacto):
+    def situacionIb(self,contacto):
         if contacto.l10n_ar_gross_income_type == 'local':
             return 1
         if contacto.l10n_ar_gross_income_type == 'multilateral':
             return 2
         else :
             return 4
-    def nro_ib(self,contacto):
+    def nroIb(self,contacto):
         return contacto.l10n_ar_gross_income_number or '0'
-    def situacion_iva(self,contacto):
+    def situacionIva(self,contacto):
         if contacto.l10n_ar_afip_responsibility_type_id.name == 'Responsable Monotributo':
             return 4
         elif contacto.l10n_ar_afip_responsibility_type_id.name == 'IVA Sujeto Exento':
             return 3
         else:
             return 1
-    def razon_social(self,contacto):
+    def razonSocial(self,contacto):
         return contacto.name
+    def ImporteIva(self,apunte,tipo_operacion):
+        if tipo_operacion == 1:
+            return 0
+        else:
+            iva_amount = 0.0
+            for line in apunte.move_id.line_ids:
+                for tax in line.tax_ids:
+                    if 'IVA' in tax.name:
+                        iva_amount += line.debit - line.credit
+            return iva_amount
+    
+             
