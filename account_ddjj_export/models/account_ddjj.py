@@ -1,6 +1,8 @@
 from odoo import models, fields, api, Command, _
 import base64
 from io import StringIO
+import io
+import zipfile
 from datetime import datetime
 
 class AccountDDJJ(models.Model):
@@ -203,11 +205,7 @@ class DDJJExport:
                 'datas': datos_content_base64,
                 'mimetype': 'text/plain',
             })
-            return {
-                'type': 'ir.actions.act_url',
-                'url': '/ddjj/download_files?attachment_id=%s&attachment2_id=%s' % (attachment.id, attachment2.id),
-                'target': 'self',
-            }
+            return download_zip([attachment.id,attachment2.id])
         else: 
             return
     
@@ -346,3 +344,28 @@ class DDJJExport:
                 return apunte.credit
             else:
                 return apunte.debit
+            
+def download_zip(self, attachment_ids):
+        # Obtener los archivos adjuntos
+        attachments = self.env['ir.attachment'].sudo().browse(attachment_ids)
+
+        # Crear un buffer en memoria para el archivo ZIP
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, 'w') as zip_file:
+            for attachment in attachments:
+                file_content = base64.b64decode(attachment.datas)
+                zip_file.writestr(attachment.name, file_content)
+
+        # Obtener el contenido del buffer
+        buffer.seek(0)
+        zip_content = buffer.read()
+
+        # Preparar la respuesta con el ZIP
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'download_zip',
+            'params': {
+                'zip_content': base64.b64encode(zip_content).decode('utf-8'),
+                'filename': 'files.zip',
+            }
+        }
