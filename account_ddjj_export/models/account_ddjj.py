@@ -324,13 +324,21 @@ class DDJJExport:
         if tipo_operacion == 1:
             retenido = 0
             base = 0
+            perc_group = 1
+            if taxgroup == 54:
+                perc_group = 28
             for line in comprobante.l10n_ar_withholding_line_ids:
                 if line.tax_id.tax_group_id.id == taxgroup:
                     retenido = line.amount
                     base = line.base_amount
             return (retenido / base) * 100
         else:
-            return (comprobante.amount_tax / comprobante.amount_untaxed) * 100
+            for line in comprobante.invoice_line_ids:
+                for tax in line.tax_ids:
+                    if tax.tax_group_id.id == perc_group:
+                        retenido += line.amount                    
+            return (retenido / comprobante.amount_untaxed) * 100
+            #return (comprobante.amount_tax / comprobante.amount_untaxed) * 100 #28
         
     def montoRetenido(self,apunte,comprobante,taxgroup,tipo_operacion):
         if tipo_operacion == 1:
