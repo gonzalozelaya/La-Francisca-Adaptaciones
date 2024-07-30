@@ -150,18 +150,21 @@ class DDJJExport:
             formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).ljust(13,' ')
             formatted_line += str(comprobante.sequence_number).rjust(13,'0')
             formatted_line += '{:.2f}'.format(self.montoComprobante(comprobante,tipo_operacion)).replace('.', ',').rjust(15, '0') 
-            formatted_line += '217'
-            formatted_line += str(self.regimenGanancia(comprobante)).ljust(3,' ')
+            formatted_line += ' 217'
+            formatted_line += str(self.regimenGanancia(comprobante)).rjust(3,' ')
             formatted_line += '1'
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,52,tipo_operacion)).replace('.', ',').rjust(16, '0')
-            formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).ljust(13,' ')
+            formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).rjust(11,'0')
             formatted_line += '01 '
-            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0')
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,52,tipo_operacion)).replace('.', ',').rjust(16, '0')
             formatted_line += '000,00'
-            formatted_line += str(' ').rjust(11,' ')
+            formatted_line += str(' ').rjust(10,' ')
             formatted_line += str(self.tipodeIdentificacionSicore(apunte.partner_id)).rjust(2,'0')
             formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).rjust(11,'0')    #Nro de identificacion
-            
+            formatted_line += str(' ').rjust(9,' ')
+            formatted_line += str('0').rjust(14,'0')
+            formatted_line += str(' ').rjust(30,' ')
+            formatted_line += str('0').rjust(24,'0')
             formatted_lines.append(formatted_line)
         return "\n".join(formatted_lines)
     
@@ -245,7 +248,7 @@ class DDJJExport:
             file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
             # Crear un adjunto en Odoo
             attachment = self.record.env['ir.attachment'].create({
-                'name': 'RetPer_AGIP.txt',
+                'name': 'Sicore.txt',
                 'type': 'binary',
                 'datas': file_content_base64,
                 'mimetype': 'text/plain',
