@@ -207,11 +207,7 @@ class DDJJExport:
                 'type': 'ir.actions.act_url',
                 'url': '/web/content/%s?download=true' % attachment.id,
                 'target': 'self',
-            }, {
-                'type': 'ir.actions.act_url',
-                'url': '/web/content/%s?download=true' % attachment2.id,
-                'target': 'new',
-                }
+            }
         else: 
             return
     
