@@ -156,7 +156,7 @@ class DDJJExport:
             comprobante = self.obtenerComprobante(apunte,tipo_operacion)
             formatted_line = str(comprobante.date.strftime('%Y/%m/%d')).rjust(10,'0')           #Fecha de comprobante
             formatted_line += str(self.tipodeIdentificacion(apunte.partner_id)).rjust(2,'0')
-            formatted_line += str(self.nrodeIdentificacion(apunte.partner_id))[2:10].rjust((11,'0'))
+            formatted_line += str(self.nrodeIdentificacion(apunte.partner_id))[2:10].rjust(11,'0')
             formatted_line += str(self.tipoFactura(apunte,tipo_operacion)).rjust(1)                                               #Tipo de operación
             formatted_line += str(comprobante.sequence_number).rjust(8,'0')
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,54,tipo_operacion)).replace('.', ',').rjust(15, '0')
