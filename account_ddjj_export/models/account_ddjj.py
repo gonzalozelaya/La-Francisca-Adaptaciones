@@ -42,7 +42,7 @@ class AccountDDJJ(models.Model):
             elif self.municipalidad == 'caba':
                 account_code = ['2.1.3.02.030','2.1.3.02.040']
             elif self.municipalidad == 'tucuman':
-                account_code = ['2.1.3.02.310']
+                account_code = ['2.1.3.02.310','2.1.3.02.320']
             
             if account_code:               
                 rec.apunte_ids = [Command.clear(), Command.set(self.env['account.move.line'].search([('account_id.code', 'in', account_code),('move_id.state', 'not in', ['draft', 'cancel']),('date', '>=', rec.date_start),('date', '<=', rec.date_end)] ).ids)] 
@@ -140,17 +140,31 @@ class DDJJExport:
         return "\n".join(formatted_lines)
     #Pendiente
     def format_jujuy(self, record):
+        
         return
     #Pendiente
     def format_sicore(seld, record):
         return
     #Pendiente
     def format_tucuman(self, record):
+        formatted_lines = []
+        for apunte in record.apunte_ids:
+            tipo_operacion = self.tipoOperacion(apunte)
+            comprobante = self.obtenerComprobante(apunte,tipo_operacion)
+            formatted_line = str(self.tipodeIdentificacionTucuman(apunte.partner_id)).ljust(2,'0')
+            formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).rjust(11,'0')
+            formatted_line += (str(self.razonSocial(apunte.partner_id))[:40] if len(str(self.razonSocial(apunte.partner_id))) > 40 else str(self.razonSocial(apunte.partner_id))).ljust(40,' ')
         return
 
     def exportToTxt(self):
-        txt_content = self.format_line(self.record)
-        return txt_content
+        if self.record.municipalidad == 'caba':
+            txt_content = self.format_line(self.record)
+            return txt_content
+        elif self.record.municipalidad == 'tucuman':
+            txt_content = self.format_tucuman(self.record)
+            return txt_content
+        else: 
+            return ''
     
     def obtenerComprobante(self,apunte,tipo_operacion):
         if tipo_operacion == 1:
@@ -210,6 +224,10 @@ class DDJJExport:
             return 2
         else: 
             return 1
+    
+    def tipodeIdentificacionTucuman(self, contacto):
+        return 80 if contacto.l10n_latam_identification_type_id.name == 'CUIT' else 96    
+
     def nrodeIdentificacion(self,contacto):
         return contacto.vat
     def situacionIb(self,contacto):
