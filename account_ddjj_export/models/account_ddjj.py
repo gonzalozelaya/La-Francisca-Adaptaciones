@@ -80,7 +80,7 @@ class AccountDDJJ(models.Model):
         #utput.close()
         #self.ensure_one()  # Asegurarse de que la acción se ejecuta sobre un solo registro
         exporter = DDJJExport(self)
-        exporter.exportToTxt()
+        return exporter.exportToTxt()
 
         
         
