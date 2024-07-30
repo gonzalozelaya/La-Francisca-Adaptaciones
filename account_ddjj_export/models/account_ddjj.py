@@ -331,15 +331,15 @@ class DDJJExport:
                     base = line.base_amount
             return (retenido / base) * 100
         else:
-            retenido = 0
+            monto_alicuota = 0
             perc_group = 1
             if taxgroup == 54:
                 perc_group = 28
             for line in comprobante.invoice_line_ids:
                 for tax in line.tax_ids:
                     if tax.tax_group_id.id == perc_group:
-                        retenido += line.amount                    
-            return (retenido / comprobante.amount_untaxed) * 100
+                        monto_alicuota = tax.amount  
+            return monto_alicuota
             #return (comprobante.amount_tax / comprobante.amount_untaxed) * 100 #28
         
     def montoRetenido(self,apunte,comprobante,taxgroup,tipo_operacion):
