@@ -205,7 +205,7 @@ class DDJJExport:
                 'datas': datos_content_base64,
                 'mimetype': 'text/plain',
             })
-            return download_zip(self.record,[attachment.id,attachment2.id])
+            return self.download_zip(self.record,[attachment.id,attachment2.id])
         else: 
             return
     
@@ -345,27 +345,27 @@ class DDJJExport:
             else:
                 return apunte.debit
             
-def download_zip(self,record, attachment_ids):
-        # Obtener los archivos adjuntos
-        attachments = record.env['ir.attachment'].sudo().browse(attachment_ids)
+    def download_zip(self,record, attachment_ids):
+            # Obtener los archivos adjuntos
+            attachments = record.env['ir.attachment'].sudo().browse(attachment_ids)
 
-        # Crear un buffer en memoria para el archivo ZIP
-        buffer = io.BytesIO()
-        with zipfile.ZipFile(buffer, 'w') as zip_file:
-            for attachment in attachments:
-                file_content = base64.b64decode(attachment.datas)
-                zip_file.writestr(attachment.name, file_content)
+            # Crear un buffer en memoria para el archivo ZIP
+            buffer = io.BytesIO()
+            with zipfile.ZipFile(buffer, 'w') as zip_file:
+                for attachment in attachments:
+                    file_content = base64.b64decode(attachment.datas)
+                    zip_file.writestr(attachment.name, file_content)
 
-        # Obtener el contenido del buffer
-        buffer.seek(0)
-        zip_content = buffer.read()
+            # Obtener el contenido del buffer
+            buffer.seek(0)
+            zip_content = buffer.read()
 
-        # Preparar la respuesta con el ZIP
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'download_zip',
-            'params': {
-                'zip_content': base64.b64encode(zip_content).decode('utf-8'),
-                'filename': 'files.zip',
+            # Preparar la respuesta con el ZIP
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'download_zip',
+                'params': {
+                    'zip_content': base64.b64encode(zip_content).decode('utf-8'),
+                    'filename': 'files.zip',
+                }
             }
-        }
