@@ -80,24 +80,9 @@ class AccountDDJJ(models.Model):
         #utput.close()
         #self.ensure_one()  # Asegurarse de que la acción se ejecuta sobre un solo registro
         exporter = DDJJExport(self)
-        txt_content = exporter.exportToTxt()
+        exporter.exportToTxt()
 
-        # Codificar el contenido en base64
-        file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
-
-        # Crear un adjunto en Odoo
-        attachment = self.env['ir.attachment'].create({
-            'name': 'export_ddjj.txt',
-            'type': 'binary',
-            'datas': file_content_base64,
-            'mimetype': 'text/plain',
-        })
         
-        return {
-            'type': 'ir.actions.act_url',
-            'url': '/web/content/%s?download=true' % attachment.id,
-            'target': 'self',
-        }
         
         
 class DDJJExport:
@@ -154,17 +139,47 @@ class DDJJExport:
             formatted_line = str(self.tipodeIdentificacionTucuman(apunte.partner_id)).ljust(2,'0')
             formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).rjust(11,'0')
             formatted_line += (str(self.razonSocial(apunte.partner_id))[:40] if len(str(self.razonSocial(apunte.partner_id))) > 40 else str(self.razonSocial(apunte.partner_id))).ljust(40,' ')
-        return
+        return "\n".join(formatted_lines)
 
     def exportToTxt(self):
         if self.record.municipalidad == 'caba':
             txt_content = self.format_line(self.record)
-            return txt_content
+                # Codificar el contenido en base64
+            file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
+
+            # Crear un adjunto en Odoo
+            attachment = self.env['ir.attachment'].create({
+                'name': 'RetPer_AGIP.txt',
+                'type': 'binary',
+                'datas': file_content_base64,
+                'mimetype': 'text/plain',
+            })
+            
+            return {
+                'type': 'ir.actions.act_url',
+                'url': '/web/content/%s?download=true' % attachment.id,
+                'target': 'self',
+            }
         elif self.record.municipalidad == 'tucuman':
-            txt_content = self.format_tucuman(self.record)
-            return txt_content
+            txt_content = self.format_line(self.record)
+                # Codificar el contenido en base64
+            file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
+
+            # Crear un adjunto en Odoo
+            attachment = self.env['ir.attachment'].create({
+                'name': 'RetPer_AGIP.txt',
+                'type': 'binary',
+                'datas': file_content_base64,
+                'mimetype': 'text/plain',
+            })
+            
+            return {
+                'type': 'ir.actions.act_url',
+                'url': '/web/content/%s?download=true' % attachment.id,
+                'target': 'self',
+            }
         else: 
-            return ''
+            return
     
     def obtenerComprobante(self,apunte,tipo_operacion):
         if tipo_operacion == 1:
