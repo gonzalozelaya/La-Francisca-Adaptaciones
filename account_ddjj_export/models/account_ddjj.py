@@ -60,7 +60,7 @@ class AccountDDJJ(models.Model):
                 selection =[('1', 'Todo'),('4', 'Retenciones y Percepciones'),('5', 'Notas de crédito')]
             elif record.municipalidad == 'tucuman':
                 selection = [('1', 'Todo'),('2', 'Retenciones'), ('3', 'Percepciones')]
-        return selection
+            record.apuntes_a_mostrar = selection
 
     def export_txt(self):
         # Crear un buffer en memoria para el contenido del archivo
