@@ -205,7 +205,7 @@ class DDJJExport:
             })
             return {
                 'type': 'ir.actions.act_url',
-                'url': '/my_module/download_files?attachment_id=%s&attachment2_id=%s' % (attachment.id, attachment2.id),
+                'url': '/ddjj/download_files?attachment_id=%s&attachment2_id=%s' % (attachment.id, attachment2.id),
                 'target': 'self',
             }
         else: 
