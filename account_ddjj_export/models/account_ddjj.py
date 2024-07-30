@@ -60,14 +60,14 @@ class AccountDDJJ(models.Model):
                 ]
                 
                 if rec.apuntes_a_mostrar == '1':
-                    domain.append(('move_id.type', '!=', 'out_refund'))
+                    domain.append(('move_id.move_type', '!=', 'out_refund'))
                 elif rec.apuntes_a_mostrar == '2':
                     domain.append(('tax_line_id.type_tax_use', '=', 'none'))
                 elif rec.apuntes_a_mostrar == '3':
                     domain.append(('tax_line_id.type_tax_use', '=', 'sale'))
                 elif rec.apuntes_a_mostrar == '4':
                     # Buscar las notas de crédito primero en el modelo 'account.move'
-                    credit_note_moves = self.env['account.move'].search([('type', '=', 'out_refund')])
+                    credit_note_moves = self.env['account.move'].search([('move_type', '=', 'out_refund')])
                     # Filtrar las líneas de apuntes contables que pertenecen a las notas de crédito encontradas
                     domain.append(('move_id', 'in', credit_note_moves.ids))
 
