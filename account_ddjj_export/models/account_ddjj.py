@@ -149,7 +149,7 @@ class DDJJExport:
 
     def exportToTxt(self):
         if self.record.municipalidad == 'caba':
-            txt_content = self.format_tucuman(self.record)
+            txt_content = self.format_line(self.record)
                 # Codificar el contenido en base64
             file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
 
@@ -167,7 +167,7 @@ class DDJJExport:
                 'target': 'self',
             }
         elif self.record.municipalidad == 'tucuman':
-            txt_content = self.format_line(self.record)
+            txt_content = self.format_tucuman(self.record)
                 # Codificar el contenido en base64
             file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
 
