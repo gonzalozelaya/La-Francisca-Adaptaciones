@@ -1,20 +1,17 @@
 # -*- coding: utf-8 -*-
 from odoo import http
+from odoo.http import request
 
-# class MyModule(http.Controller):
-#     @http.route('/my_module/my_module/', auth='public')
-#     def index(self, **kw):
-#         return "Hello, world"
+class DownloadController(http.Controller):
 
-#     @http.route('/my_module/my_module/objects/', auth='public')
-#     def list(self, **kw):
-#         return http.request.render('my_module.listing', {
-#             'root': '/my_module/my_module',
-#             'objects': http.request.env['my_module.my_module'].search([]),
-#         })
+    @http.route('/ddjj/download_files', type='http', auth='user')
+    def download_files(self, attachment_id, attachment2_id, **kw):
+        attachment = request.env['ir.attachment'].sudo().browse(int(attachment_id))
+        attachment2 = request.env['ir.attachment'].sudo().browse(int(attachment2_id))
 
-#     @http.route('/my_module/my_module/objects/<model("my_module.my_module"):obj>/', auth='public')
-#     def object(self, obj, **kw):
-#         return http.request.render('my_module.object', {
-#             'object': obj
-#         })
+        if attachment.exists():
+            attachment_url = '/web/content/%s?download=true' % attachment.id
+        if attachment2.exists():
+            attachment2_url = '/web/content/%s?download=true' % attachment2.id
+
+        return request.redirect(attachment_url + '|' + attachment2_url)
