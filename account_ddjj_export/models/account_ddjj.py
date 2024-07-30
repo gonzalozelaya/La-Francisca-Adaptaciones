@@ -141,13 +141,34 @@ class DDJJExport:
         
         return
     #Pendiente
-    def format_sicore(seld, record):
-        return
+    def format_sicore(self, record):
+        formatted_lines = []
+        for apunte in record.apunte_ids:
+            tipo_operacion = self.tipoOperacion(apunte)
+            comprobante = self.obtenerComprobante(apunte,tipo_operacion)
+            formatted_line = str(self.tipoComprobanteSicore(comprobante,tipo_operacion)).rjust(2,'0')
+            formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).ljust(13,' ')
+            formatted_line += str(comprobante.sequence_number).rjust(13,'0')
+            formatted_line += '{:.2f}'.format(self.montoComprobante(comprobante,tipo_operacion)).replace('.', ',').rjust(15, '0') 
+            formatted_line += '217'
+            formatted_line += str(self.regimenGanancia(comprobante)).ljust(3,' ')
+            formatted_line += '1'
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,52,tipo_operacion)).replace('.', ',').rjust(16, '0')
+            formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).ljust(13,' ')
+            formatted_line += '01 '
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0')
+            formatted_line += '000,00'
+            formatted_line += str(' ').rjust(11,' ')
+            formatted_line += str(self.tipodeIdentificacionSicore(apunte.partner_id)).rjust(2,'0')
+            formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).rjust(11,'0')    #Nro de identificacion
+            
+            formatted_lines.append(formatted_line)
+        return "\n".join(formatted_lines)
+    
     #Pendiente
     def format_tucuman_datos(self, record):
         formatted_lines = []
         for apunte in record.apunte_ids:
-            tipo_operacion = self.tipoOperacion(apunte)
             formatted_line = str(self.tipodeIdentificacionTucuman(apunte.partner_id)).ljust(2,'0')
             formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).rjust(11,'0')
             formatted_line += (str(self.razonSocial(apunte.partner_id))[:40] if len(str(self.razonSocial(apunte.partner_id))) > 40 else str(self.razonSocial(apunte.partner_id))).ljust(40,' ')
@@ -166,10 +187,11 @@ class DDJJExport:
         for apunte in record.apunte_ids:
             tipo_operacion = self.tipoOperacion(apunte)
             comprobante = self.obtenerComprobante(apunte,tipo_operacion)
-            formatted_line = str(comprobante.date.strftime('%Y/%m/%d')).rjust(10,'0')           #Fecha de comprobante
+            formatted_line = str(comprobante.date.strftime('%Y%m%d')).rjust(8,'0')           #Fecha de comprobante
             formatted_line += str(self.tipodeIdentificacionTucuman(apunte.partner_id)).ljust(2,'0')
             formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).rjust(11,'0')
-            formatted_line += str(self.tipoFactura(apunte,tipo_operacion)).rjust(1) 
+            formatted_line += str(self.tipoComprobanteTucuman(comprobante,tipo_operacion)).rjust(1)
+            formatted_line += str(self.tipoFactura(apunte,tipo_operacion)).rjust(2,'0')
             formatted_line += str(1).rjust(4,'0')  
             formatted_line += str(comprobante.sequence_number).rjust(8,'0')
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,54,tipo_operacion)).rjust(15, '0')
@@ -217,7 +239,23 @@ class DDJJExport:
                 'mimetype': 'text/plain',
             })
             return self.download_zip(self.record,[attachment.id,attachment2.id])
-        else: 
+        elif self.record.municipalidad == 'sicore':
+            txt_content = self.format_sicore(self.record)
+            # Codificar el contenido en base64
+            file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
+            # Crear un adjunto en Odoo
+            attachment = self.record.env['ir.attachment'].create({
+                'name': 'RetPer_AGIP.txt',
+                'type': 'binary',
+                'datas': file_content_base64,
+                'mimetype': 'text/plain',
+            })
+            return {
+                'type': 'ir.actions.act_url',
+                'url': '/web/content/%s?download=true' % attachment.id,
+                'target': 'self',
+            }
+        else:
             return
     
     def obtenerComprobante(self,apunte,tipo_operacion):
@@ -243,7 +281,32 @@ class DDJJExport:
         else:
             factura = apunte.move_id
             return factura.l10n_latam_document_type_id.l10n_ar_letter
-    
+    def tipoComprobanteTucuman(self,comprobante,tipo_operacion):
+        if tipo_operacion == 1:
+            return 98
+        else:
+            comp = 1
+            if comprobante.move_type == 'out_invoice' or comprobante.move_type == 'in_invoice':
+                comp = 1
+            if comprobante.move_type == 'out_refund' or comprobante.move_type == 'in_refund':
+                comp = 3
+            if comprobante.move_type == 'out_receipt' or comprobante.move_type == 'in_receipt':
+                comp = 4
+            return comp
+    def tipoComprobanteSicore(self,comprobante,tipo_operacion):
+        if tipo_operacion == 1:
+            return 6
+        else:
+            comp = 1
+            if comprobante.move_type == 'out_invoice' or comprobante.move_type == 'in_invoice':
+                comp = 1
+            if comprobante.move_type == 'out_refund' or comprobante.move_type == 'in_refund':
+                comp = 3
+            if comprobante.move_type == 'out_receipt' or comprobante.move_type == 'in_receipt':
+                comp = 2
+            return comp
+    def regimenGanancia(self,comprobante):
+        return comprobante.regimen_ganancias_id.codigo_de_regimen
     def tipoOperacion(self,apunte):
         if apunte.tax_line_id.type_tax_use == 'sale':
             return 2
@@ -282,6 +345,14 @@ class DDJJExport:
     def tipodeIdentificacionTucuman(self, contacto):
         return 80 if contacto.l10n_latam_identification_type_id.name == 'CUIT' else 96    
 
+    def tipodeIdentificacionSicore(self, contacto):
+        ident = 80
+        if contacto.l10n_latam_identification_type_id.name == 'CUIT':
+            ident = 80
+        elif contacto.l10n_latam_identification_type_id.name == 'CUIL':
+            ident = 86
+        return ident
+    
     def nrodeIdentificacion(self,contacto):
         return contacto.vat
     def situacionIb(self,contacto):
@@ -325,11 +396,10 @@ class DDJJExport:
             retenido = 0
             for line in comprobante.l10n_ar_withholding_line_ids:
                 if line.tax_id.tax_group_id.id == taxgroup:
-                    retenido = line.amount
+                    retenido = line.base_amount
             return retenido
         else:
             return comprobante.amount_untaxed
-
 
     def porcentajeAlicuota(self,comprobante,taxgroup,tipo_operacion):
         if tipo_operacion == 1:
