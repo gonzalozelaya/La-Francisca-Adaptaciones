@@ -205,7 +205,7 @@ class DDJJExport:
                 'datas': datos_content_base64,
                 'mimetype': 'text/plain',
             })
-            return download_zip([attachment.id,attachment2.id])
+            return download_zip(self.record,[attachment.id,attachment2.id])
         else: 
             return
     
@@ -345,9 +345,9 @@ class DDJJExport:
             else:
                 return apunte.debit
             
-def download_zip(self, attachment_ids):
+def download_zip(self,record, attachment_ids):
         # Obtener los archivos adjuntos
-        attachments = self.env['ir.attachment'].sudo().browse(attachment_ids)
+        attachments = record.env['ir.attachment'].sudo().browse(attachment_ids)
 
         # Crear un buffer en memoria para el archivo ZIP
         buffer = io.BytesIO()
