@@ -38,7 +38,7 @@ class AccountDDJJ(models.Model):
         store=True,)
     
     
-    @api.depends('date_start','date_end','municipalidad')
+    @api.depends('date_start','date_end','municipalidad','apuntes_a_mostrar')
     def _compute_apunte_ids(self):
         for rec in self:
             account_code = []
@@ -66,7 +66,10 @@ class AccountDDJJ(models.Model):
                 elif rec.apuntes_a_mostrar == '3':
                     domain.append(('tax_line_id.type_tax_use', '=', 'sale'))
                 elif rec.apuntes_a_mostrar == '4':
-                    domain.append(('move_id.type', '=', 'out_refund'))
+                    # Buscar las notas de crédito primero en el modelo 'account.move'
+                    credit_note_moves = self.env['account.move'].search([('type', '=', 'out_refund')])
+                    # Filtrar las líneas de apuntes contables que pertenecen a las notas de crédito encontradas
+                    domain.append(('move_id', 'in', credit_note_moves.ids))
 
                 account_move_lines = self.env['account.move.line'].search(domain)
                 rec.apunte_ids = [Command.clear(), Command.set(account_move_lines.ids)]
