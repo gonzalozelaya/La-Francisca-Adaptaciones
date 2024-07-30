@@ -363,7 +363,7 @@ class DDJJExport:
             zip_content_base64 = base64.b64encode(zip_content).decode('utf-8')
 
             # Crear un archivo adjunto en Odoo
-            attachment = self.env['ir.attachment'].create({
+            attachment = self.record.env['ir.attachment'].create({
                 'name': 'files.zip',
                 'type': 'binary',
                 'datas': zip_content_base64,
