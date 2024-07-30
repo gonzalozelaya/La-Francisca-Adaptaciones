@@ -131,7 +131,7 @@ class DDJJExport:
     def format_sicore(seld, record):
         return
     #Pendiente
-    def format_tucuman(self, record):
+    def format_tucuman_datos(self, record):
         formatted_lines = []
         for apunte in record.apunte_ids:
             tipo_operacion = self.tipoOperacion(apunte)
@@ -140,7 +140,7 @@ class DDJJExport:
             formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).rjust(11,'0')
             formatted_line += (str(self.razonSocial(apunte.partner_id))[:40] if len(str(self.razonSocial(apunte.partner_id))) > 40 else str(self.razonSocial(apunte.partner_id))).ljust(40,' ')
             formatted_line += (str(self.domicilioPartner(apunte.partner_id))[:40] if len(str(self.domicilioPartner(apunte.partner_id))) > 40 else str(self.domicilioPartner(apunte.partner_id))).ljust(40,' ')
-            formatted_line += str(00000)
+            formatted_line += str(00000).ljust(5,'0')
             formatted_line += (str(self.localidadPartner(apunte.partner_id))[:15] if len(str(self.localidadPartner(apunte.partner_id))) > 15 else str(self.localidadPartner(apunte.partner_id))).ljust(15,' ')
             formatted_line += (str(self.provinciaPartner(apunte.partner_id))[:15] if len(str(self.provinciaPartner(apunte.partner_id))) > 15 else str(self.provinciaPartner(apunte.partner_id))).ljust(15,' ')
             formatted_line += str('').ljust(15,' ')
@@ -148,7 +148,23 @@ class DDJJExport:
             
             formatted_lines.append(formatted_line)
         return "\n".join(formatted_lines)
-
+    
+    def format_tucuman_detalle(self, record):
+        formatted_lines = []
+        for apunte in record.apunte_ids:
+            tipo_operacion = self.tipoOperacion(apunte)
+            comprobante = self.obtenerComprobante(apunte,tipo_operacion)
+            formatted_line = str(comprobante.date.strftime('%Y/%m/%d')).rjust(10,'0')           #Fecha de comprobante
+            formatted_line += str(self.tipodeIdentificacion(apunte.partner_id)).rjust((2,'0'))
+            formatted_line += str(self.nrodeIdentificacion(apunte.partner_id))[2:10].rjust((11,'0'))
+            formatted_line += str(self.tipoFactura(apunte,tipo_operacion)).rjust(1)                                               #Tipo de operación
+            formatted_line += str(comprobante.sequence_number).rjust(8,'0')
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,28,tipo_operacion)).replace('.', ',').rjust(15, '0')
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,28,tipo_operacion)).replace('.', ',').rjust(6, '0') #Alicuota
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,28,tipo_operacion)).replace('.', ',').rjust(15, '0')
+            
+            formatted_lines.append(formatted_line)
+        return "\n".join(formatted_lines)
     def exportToTxt(self):
         if self.record.municipalidad == 'caba':
             txt_content = self.format_line(self.record)
@@ -169,23 +185,33 @@ class DDJJExport:
                 'target': 'self',
             }
         elif self.record.municipalidad == 'tucuman':
-            txt_content = self.format_tucuman(self.record)
+            txt_content = self.format_tucuman_datos(self.record)
+            datos_content = self.format_tucuman_detalle(self.record)
             # Codificar el contenido en base64
-            file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
-
+            txt_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
+            datos_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
             # Crear un adjunto en Odoo
             attachment = self.record.env['ir.attachment'].create({
-                'name': 'RetPer_Tucuman.txt',
+                'name': 'RETPER.txt',
                 'type': 'binary',
-                'datas': file_content_base64,
+                'datas': txt_content_base64,
                 'mimetype': 'text/plain',
             })
-            
+            attachment2 = self.record.env['ir.attachment'].create({
+                'name': 'DATOS.txt',
+                'type': 'binary',
+                'datas': datos_content_base64,
+                'mimetype': 'text/plain',
+            })
             return {
                 'type': 'ir.actions.act_url',
                 'url': '/web/content/%s?download=true' % attachment.id,
                 'target': 'self',
-            }
+            }, {
+                'type': 'ir.actions.act_url',
+                'url': '/web/content/%s?download=true' % attachment2.id,
+                'target': 'new',
+                }
         else: 
             return
     
