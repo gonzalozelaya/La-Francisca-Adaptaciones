@@ -155,13 +155,13 @@ class DDJJExport:
             tipo_operacion = self.tipoOperacion(apunte)
             comprobante = self.obtenerComprobante(apunte,tipo_operacion)
             formatted_line = str(comprobante.date.strftime('%Y/%m/%d')).rjust(10,'0')           #Fecha de comprobante
-            formatted_line += str(self.tipodeIdentificacion(apunte.partner_id)).rjust((2,'0'))
+            formatted_line += str(self.tipodeIdentificacion(apunte.partner_id)).rjust(2,'0')
             formatted_line += str(self.nrodeIdentificacion(apunte.partner_id))[2:10].rjust((11,'0'))
             formatted_line += str(self.tipoFactura(apunte,tipo_operacion)).rjust(1)                                               #Tipo de operación
             formatted_line += str(comprobante.sequence_number).rjust(8,'0')
-            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,28,tipo_operacion)).replace('.', ',').rjust(15, '0')
-            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,28,tipo_operacion)).replace('.', ',').rjust(6, '0') #Alicuota
-            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,28,tipo_operacion)).replace('.', ',').rjust(15, '0')
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,54,tipo_operacion)).replace('.', ',').rjust(15, '0')
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,54,tipo_operacion)).replace('.', ',').rjust(6, '0') #Alicuota
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,54,tipo_operacion)).replace('.', ',').rjust(15, '0')
             
             formatted_lines.append(formatted_line)
         return "\n".join(formatted_lines)
