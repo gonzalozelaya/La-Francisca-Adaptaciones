@@ -149,14 +149,14 @@ class DDJJExport:
             formatted_line = str(self.tipoComprobanteSicore(comprobante,tipo_operacion)).rjust(2,'0')
             formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).ljust(13,' ')
             formatted_line += str(comprobante.sequence_number).rjust(13,'0')
-            formatted_line += '{:.2f}'.format(self.montoComprobante(comprobante,tipo_operacion)).replace('.', ',').rjust(15, '0') 
+            formatted_line += '{:.2f}'.format(self.montoComprobante(comprobante,tipo_operacion)).replace('.', ',').rjust(16, '0') 
             formatted_line += ' 217'
             formatted_line += str(self.regimenGanancia(comprobante)).rjust(3,' ')
             formatted_line += '1'
-            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,52,tipo_operacion)).replace('.', ',').rjust(16, '0')
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,52,tipo_operacion)).replace('.', ',').rjust(14, '0')
             formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).rjust(11,'0')
             formatted_line += '01 '
-            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,52,tipo_operacion)).replace('.', ',').rjust(16, '0')
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,52,tipo_operacion)).replace('.', ',').rjust(14, '0')
             formatted_line += '000,00'
             formatted_line += str(' ').rjust(10,' ')
             formatted_line += str(self.tipodeIdentificacionSicore(apunte.partner_id)).rjust(2,'0')
