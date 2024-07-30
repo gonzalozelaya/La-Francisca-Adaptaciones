@@ -139,16 +139,22 @@ class DDJJExport:
             formatted_line = str(self.tipodeIdentificacionTucuman(apunte.partner_id)).ljust(2,'0')
             formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).rjust(11,'0')
             formatted_line += (str(self.razonSocial(apunte.partner_id))[:40] if len(str(self.razonSocial(apunte.partner_id))) > 40 else str(self.razonSocial(apunte.partner_id))).ljust(40,' ')
+            formatted_line += (str(self.domicilioPartner(apunte.partner_id))[:40] if len(str(self.domicilioPartner(apunte.partner_id))) > 40 else str(self.domicilioPartner(apunte.partner_id))).ljust(40,' ')
+            formatted_line += str(00000)
+            formatted_line += (str(self.localidadPartner(apunte.partner_id))[:15] if len(str(self.localidadPartner(apunte.partner_id))) > 15 else str(self.localidadPartner(apunte.partner_id))).ljust(15,' ')
+            formatted_line += (str(self.provinciaPartner(apunte.partner_id))[:15] if len(str(self.provinciaPartner(apunte.partner_id))) > 15 else str(self.provinciaPartner(apunte.partner_id))).ljust(15,' ')
+            formatted_line += str('').ljust(15,' ')
+            formatted_line += (str(self.codigoPostalPartner(apunte.partner_id))[:8] if len(str(self.codigoPostalPartner(apunte.partner_id))) > 8 else str(self.codigoPostalPartner(apunte.partner_id))).ljust(8,' ')
         return "\n".join(formatted_lines)
 
     def exportToTxt(self):
         if self.record.municipalidad == 'caba':
-            txt_content = self.format_line(self.record)
+            txt_content = self.format_tucuman(self.record)
                 # Codificar el contenido en base64
             file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
 
             # Crear un adjunto en Odoo
-            attachment = self.env['ir.attachment'].create({
+            attachment = self.record.env['ir.attachment'].create({
                 'name': 'RetPer_AGIP.txt',
                 'type': 'binary',
                 'datas': file_content_base64,
@@ -166,7 +172,7 @@ class DDJJExport:
             file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
 
             # Crear un adjunto en Odoo
-            attachment = self.env['ir.attachment'].create({
+            attachment = self.record.env['ir.attachment'].create({
                 'name': 'RetPer_AGIP.txt',
                 'type': 'binary',
                 'datas': file_content_base64,
@@ -262,7 +268,15 @@ class DDJJExport:
         else:
             return 1
     def razonSocial(self,contacto):
-        return contacto.name
+        return contacto.name   
+    def domicilioPartner(self,contacto):
+        return contacto.street
+    def localidadPartner(self,contacto):
+        return contacto.city
+    def provinciaPartner(self,contacto):
+        return contacto.state_id.name
+    def codigoPostalPartner(self, contacto):
+        return contacto.zip
     def ImporteIva(self,apunte,tipo_operacion):
         if tipo_operacion == 1:
             return 0
