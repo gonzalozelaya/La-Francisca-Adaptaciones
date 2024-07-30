@@ -22,7 +22,12 @@ class AccountDDJJ(models.Model):
         string='Municipalidad',
         required=True
     )
-    apuntes_a_mostrar =  fields.Selection(string='Apuntes a mostrar', selection='_compute_apuntes_a_mostrar')
+    apuntes_a_mostrar =  fields.Selection(string='Apuntes a exportar', selection=[
+        ('1', 'Retenciones y Percepciones'),
+        ('2', 'Retenciones'),
+        ('3', 'Percepciones'),
+        ('4', 'Notas de credito')
+    ])
     apunte_ids = fields.Many2many(
         comodel_name='account.move.line',
         relation='account_ddjj_move_line_rel',
@@ -47,22 +52,25 @@ class AccountDDJJ(models.Model):
                 account_code = ['2.1.3.02.310','2.1.3.02.320']
             
             if account_code:               
-                rec.apunte_ids = [Command.clear(), Command.set(self.env['account.move.line'].search([('account_id.code', 'in', account_code),('move_id.state', 'not in', ['draft', 'cancel']),('date', '>=', rec.date_start),('date', '<=', rec.date_end)] ).ids)] 
+                domain = [
+                ('account_id.code', 'in', account_code),
+                ('move_id.state', 'not in', ['draft', 'cancel']),
+                ('date', '>=', rec.date_start),
+                ('date', '<=', rec.date_end)
+                ]
+                
+                if rec.apuntes_a_mostrar == '1':
+                    domain.append(('move_id.type', '!=', 'out_refund'))
+                elif rec.apuntes_a_mostrar == '2':
+                    domain.append(('tax_line_id.type_tax_use', '=', 'none'))
+                elif rec.apuntes_a_mostrar == '3':
+                    domain.append(('tax_line_id.type_tax_use', '=', 'sale'))
+                elif rec.apuntes_a_mostrar == '4':
+                    domain.append(('move_id.type', '=', 'out_refund'))
+
+                account_move_lines = self.env['account.move.line'].search(domain)
+                rec.apunte_ids = [Command.clear(), Command.set(account_move_lines.ids)]
                 # Asignar los apuntes contables encontrados al campo many2many
-    
-    @api.depends('municipalidad')
-    def _compute_apuntes_a_mostrar(self):
-        selection = []
-        for record in self:
-            if record.municipalidad == 'jujuy':
-                selection = [('1', 'Todo'),('2', 'Retenciones'), ('3', 'Percepciones')]
-            elif record.municipalidad == 'salta':
-                selection = [('1', 'Todo'),('2', 'Retenciones'), ('3', 'Percepciones')]
-            elif record.municipalidad == 'caba':
-                selection =[('1', 'Todo'),('4', 'Retenciones y Percepciones'),('5', 'Notas de crédito')]
-            elif record.municipalidad == 'tucuman':
-                selection = [('1', 'Todo'),('2', 'Retenciones'), ('3', 'Percepciones')]
-        return selection
 
     def export_txt(self):
         # Crear un buffer en memoria para el contenido del archivo
