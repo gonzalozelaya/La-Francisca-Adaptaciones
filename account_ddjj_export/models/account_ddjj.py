@@ -172,9 +172,9 @@ class DDJJExport:
             formatted_line += str(self.tipoFactura(apunte,tipo_operacion)).rjust(1) 
             formatted_line += str(1).rjust(4,'0')  
             formatted_line += str(comprobante.sequence_number).rjust(8,'0')
-            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,54,tipo_operacion)).replace('.', ',').rjust(15, '0')
-            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,54,tipo_operacion)).replace('.', ',').rjust(6, '0') #Alicuota
-            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,54,tipo_operacion)).replace('.', ',').rjust(15, '0')
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,54,tipo_operacion)).rjust(15, '0')
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,54,tipo_operacion)).rjust(6, '0') #Alicuota
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,54,tipo_operacion)).rjust(15, '0')
             
             formatted_lines.append(formatted_line)
         return "\n".join(formatted_lines)
