@@ -145,6 +145,8 @@ class DDJJExport:
             formatted_line += (str(self.provinciaPartner(apunte.partner_id))[:15] if len(str(self.provinciaPartner(apunte.partner_id))) > 15 else str(self.provinciaPartner(apunte.partner_id))).ljust(15,' ')
             formatted_line += str('').ljust(15,' ')
             formatted_line += (str(self.codigoPostalPartner(apunte.partner_id))[:8] if len(str(self.codigoPostalPartner(apunte.partner_id))) > 8 else str(self.codigoPostalPartner(apunte.partner_id))).ljust(8,' ')
+            
+            formatted_lines.append(formatted_line)
         return "\n".join(formatted_lines)
 
     def exportToTxt(self):
@@ -168,12 +170,12 @@ class DDJJExport:
             }
         elif self.record.municipalidad == 'tucuman':
             txt_content = self.format_tucuman(self.record)
-                # Codificar el contenido en base64
+            # Codificar el contenido en base64
             file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
 
             # Crear un adjunto en Odoo
             attachment = self.record.env['ir.attachment'].create({
-                'name': 'RetPer_AGIP.txt',
+                'name': 'RetPer_Tucuman.txt',
                 'type': 'binary',
                 'datas': file_content_base64,
                 'mimetype': 'text/plain',
