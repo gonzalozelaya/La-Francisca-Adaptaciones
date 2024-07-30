@@ -191,7 +191,7 @@ class DDJJExport:
             datos_content = self.format_tucuman_detalle(self.record)
             # Codificar el contenido en base64
             txt_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
-            datos_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
+            datos_content_base64 = base64.b64encode(datos_content.encode('utf-8')).decode('utf-8')
             # Crear un adjunto en Odoo
             attachment = self.record.env['ir.attachment'].create({
                 'name': 'RETPER.txt',
@@ -364,7 +364,7 @@ class DDJJExport:
 
             # Crear un archivo adjunto en Odoo
             attachment = self.record.env['ir.attachment'].create({
-                'name': 'files.zip',
+                'name': 'DDJJ_Tucuman.zip',
                 'type': 'binary',
                 'datas': zip_content_base64,
                 'mimetype': 'application/zip',
