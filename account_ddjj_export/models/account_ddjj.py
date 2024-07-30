@@ -360,12 +360,19 @@ class DDJJExport:
             buffer.seek(0)
             zip_content = buffer.read()
 
-            # Preparar la respuesta con el ZIP
+            zip_content_base64 = base64.b64encode(zip_content).decode('utf-8')
+
+            # Crear un archivo adjunto en Odoo
+            attachment = self.env['ir.attachment'].create({
+                'name': 'files.zip',
+                'type': 'binary',
+                'datas': zip_content_base64,
+                'mimetype': 'application/zip',
+            })
+
+            # Generar una URL para descargar el archivo
             return {
-                'type': 'ir.actions.client',
-                'tag': 'download_zip',
-                'params': {
-                    'zip_content': base64.b64encode(zip_content).decode('utf-8'),
-                    'filename': 'files.zip',
-                }
+                'type': 'ir.actions.act_url',
+                'url': '/web/content/%s?download=true' % attachment.id,
+                'target': 'self',
             }
