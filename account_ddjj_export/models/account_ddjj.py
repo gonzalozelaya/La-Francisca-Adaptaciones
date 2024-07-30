@@ -27,7 +27,7 @@ class AccountDDJJ(models.Model):
         ('2', 'Retenciones'),
         ('3', 'Percepciones'),
         ('4', 'Notas de credito')
-    ])
+    ], default='1')
     apunte_ids = fields.Many2many(
         comodel_name='account.move.line',
         relation='account_ddjj_move_line_rel',
@@ -148,7 +148,6 @@ class DDJJExport:
         formatted_lines = []
         for apunte in record.apunte_ids:
             tipo_operacion = self.tipoOperacion(apunte)
-            comprobante = self.obtenerComprobante(apunte,tipo_operacion)
             formatted_line = str(self.tipodeIdentificacionTucuman(apunte.partner_id)).ljust(2,'0')
             formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).rjust(11,'0')
             formatted_line += (str(self.razonSocial(apunte.partner_id))[:40] if len(str(self.razonSocial(apunte.partner_id))) > 40 else str(self.razonSocial(apunte.partner_id))).ljust(40,' ')
@@ -168,9 +167,10 @@ class DDJJExport:
             tipo_operacion = self.tipoOperacion(apunte)
             comprobante = self.obtenerComprobante(apunte,tipo_operacion)
             formatted_line = str(comprobante.date.strftime('%Y/%m/%d')).rjust(10,'0')           #Fecha de comprobante
-            formatted_line += str(self.tipodeIdentificacion(apunte.partner_id)).rjust(2,'0')
-            formatted_line += str(self.nrodeIdentificacion(apunte.partner_id))[2:10].rjust(11,'0')
-            formatted_line += str(self.tipoFactura(apunte,tipo_operacion)).rjust(1)                                               #Tipo de operación
+            formatted_line += str(self.tipodeIdentificacionTucuman(apunte.partner_id)).ljust(2,'0')
+            formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).rjust(11,'0')
+            formatted_line += str(self.tipoFactura(apunte,tipo_operacion)).rjust(1) 
+            formatted_line += str(1).rjust(4,'0')  
             formatted_line += str(comprobante.sequence_number).rjust(8,'0')
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,54,tipo_operacion)).replace('.', ',').rjust(15, '0')
             formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,54,tipo_operacion)).replace('.', ',').rjust(6, '0') #Alicuota
