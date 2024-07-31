@@ -400,7 +400,7 @@ class DDJJExport:
             monto_retencion = 0
             suma_factura = 0
             for retencion in comprobante.l10n_ar_withholding_line_ids:
-                if line.tax_id.tax_group_id.id == taxgroup:
+                if retencion.tax_id.tax_group_id.id == taxgroup:
                     base_retencion= retencion.base_amount
                     monto_retencion = retencion.amount
             for line in comprobante.matched_move_line_ids:
