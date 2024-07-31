@@ -116,11 +116,8 @@ class DDJJExport:
             formatted_line += str(comprobante.sequence_number).rjust(16,'0')    #Número de comprobante
             formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).rjust(10,'0')           #Fecha de comprobante
             formatted_line += '{:.2f}'.format(self.montoComprobante(comprobante,tipo_operacion)).replace('.', ',').rjust(16, '0')      #Monto de comprobante
-            formatted_line += str(self.buscarNroCertificado(comprobante,53,tipo_operacion)).split('-')[-1].rjust(16,' ')     #Nro de certificado propio
+            formatted_line += str(self.buscarNroCertificado(comprobante,53,tipo_operacion)).split('-')[-1].ljust(16,' ')     #Nro de certificado propio
             formatted_line += str(self.tipodeIdentificacion(apunte.partner_id))   #Tipo de identificacion 1:CDI/2:CUIL/3:CUIT
-            formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).ljust(11,'0')
-            #Nro de identificacion
-            
             formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).rjust(11,'0')    #Nro de identificacion
             formatted_line += str(self.situacionIb(apunte.partner_id))         #Situacion IB
             formatted_line += str(self.nroIb(apunte.partner_id)).rjust(11,'0')  #Nro IB
