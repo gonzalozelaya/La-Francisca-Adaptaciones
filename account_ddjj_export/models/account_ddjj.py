@@ -396,8 +396,6 @@ class DDJJExport:
             return iva_amount
     def importeOtrosConceptos(self,tipo_operacion,comprobante,taxgroup):
         if tipo_operacion == 1:
-            return 0
-        else:
             base_retencion = 0
             monto_retencion = 0
             suma_factura = 0
@@ -407,7 +405,10 @@ class DDJJExport:
                     monto_retencion = retencion.amount
             for line in comprobante.matched_move_line_ids:
                 suma_factura += line.credit
-        return suma_factura - base_retencion - monto_retencion
+            return suma_factura - base_retencion - monto_retencion
+        else:
+            return 0
+            
     def montoSujetoARetencion(self,comprobante,taxgroup,tipo_operacion):
         if tipo_operacion == 1:
             retenido = 0
