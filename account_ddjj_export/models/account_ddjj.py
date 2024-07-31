@@ -151,7 +151,7 @@ class DDJJExport:
             formatted_line += str(self.regimenGanancia(comprobante)).rjust(3,' ')
             formatted_line += '1'
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,52,tipo_operacion)).replace('.', ',').rjust(14, '0')
-            formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).rjust(12,'0')
+            formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).rjust(10,'0')
             formatted_line += '01 '
             formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,52,tipo_operacion)).replace('.', ',').rjust(14, '0')
             formatted_line += '000,00'
