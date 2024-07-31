@@ -271,12 +271,12 @@ class DDJJExport:
             return comprobante.invoice_date
     def montoComprobante(self,comprobante,tipo_operacion):
             if tipo_operacion == 1:
-                return comprobante.matched_amount
-            else:
                 suma_factura = 0
                 for line in comprobante.matched_move_line_ids:
                     suma_factura += line.credit
-            return suma_factura
+                return suma_factura
+            else:
+                return comprobante.amount_total
     
     def tipoFactura(self,apunte,tipo_operacion):
         if tipo_operacion ==1:
