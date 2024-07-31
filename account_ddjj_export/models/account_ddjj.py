@@ -163,6 +163,7 @@ class DDJJExport:
             formatted_line += str(' ').rjust(30,' ')
             formatted_line += str('0').rjust(24,'0')
             formatted_lines.append(formatted_line)
+        formatted_lines.append('')
         return "\n".join(formatted_lines)
     
     #Pendiente
@@ -203,7 +204,8 @@ class DDJJExport:
     def exportToTxt(self):
         if self.record.municipalidad == 'caba':
             txt_content = self.format_line(self.record)
-                # Codificar el contenido en base64
+            
+            # Codificar el contenido en base64
             file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
 
             # Crear un adjunto en Odoo
