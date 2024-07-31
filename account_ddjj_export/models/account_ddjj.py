@@ -126,7 +126,7 @@ class DDJJExport:
             formatted_line += '{:.2f}'.format(self.importeOtrosConceptos(tipo_operacion,comprobante,53)).replace('.', ',').rjust(16,'0') #Importe otros conceptos 
             formatted_line += '{:.2f}'.format(self.ImporteIva(apunte,tipo_operacion)).replace('.', ',').rjust(16, '0') #Importe IVA 
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0') #Monto sujeto a retención (Neto) 
-            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0') #Alicuota
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,53,tipo_operacion)).replace('.', ',').rjust(5, '0') #Alicuota
             formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0')
             formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0')
              
