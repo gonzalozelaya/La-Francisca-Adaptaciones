@@ -154,7 +154,7 @@ class DDJJExport:
             formatted_line += str(self.regimenGanancia(comprobante)).rjust(3,' ')
             formatted_line += '1'
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,52,tipo_operacion)).replace('.', ',').rjust(14, '0')
-            formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).rjust(11,'0')
+            formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).rjust(12,'0')
             formatted_line += '01 '
             formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,52,tipo_operacion)).replace('.', ',').rjust(14, '0')
             formatted_line += '000,00'
@@ -317,7 +317,7 @@ class DDJJExport:
             return 1
     def tipoComprobanteOrigen(self,tipo_operacion, apunte):
         if tipo_operacion == 1:
-            return '01'
+            return '03'
         else:
             factura = apunte.move_id
             if factura.l10n_latam_document_type_id.internal_type == 'Invoice':
@@ -327,7 +327,7 @@ class DDJJExport:
             elif factura.l10n_latam_document_type_id.internal_type == 'Credit Notes':
                 return '09'
             else:
-                return '00'   
+                return '01'   
     
     def buscarNroCertificado(self,pago,taxgroup,tipo_operacion):
         cert = ''
