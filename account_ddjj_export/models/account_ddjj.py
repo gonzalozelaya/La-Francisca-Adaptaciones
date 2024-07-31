@@ -283,6 +283,7 @@ class DDJJExport:
                         suma_factura = credit_sum
                     elif not line.full_reconcile_id:
                         suma_factura += line.credit
+                return suma_factura
             else:
                 return comprobante.amount_total
     
