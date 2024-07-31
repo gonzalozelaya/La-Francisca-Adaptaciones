@@ -416,8 +416,7 @@ class DDJJExport:
                 if line.full_reconcile_id:
                     related_movements = self.record.env['account.move.line'].search([
                     ('full_reconcile_id', '=', line.full_reconcile_id.id)])
-                    credit_sum = sum(line.credit for line in related_movements if line.credit > 0)
-                    # Puedes almacenar o usar 'credit_sum' según sea necesario
+                    credit_sum = sum(move.credit for move in related_movements if move.credit > 0)
                     suma_factura += credit_sum
                 elif not line.full_reconcile_id:
                     suma_factura += line.credit
