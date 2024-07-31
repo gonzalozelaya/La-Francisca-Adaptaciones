@@ -123,7 +123,7 @@ class DDJJExport:
             formatted_line += str(self.nroIb(apunte.partner_id)).rjust(11,'0')  #Nro IB
             formatted_line += str(self.situacionIva(apunte.partner_id))        #Situacion IVA
             formatted_line += (str(self.razonSocial(apunte.partner_id))[:30] if len(str(self.razonSocial(apunte.partner_id))) > 30 else str(self.razonSocial(apunte.partner_id))).ljust(30, ' ') #Razon social
-            formatted_line += '{:.2f}'.format(0).replace('.', ',').rjust(16, '0') #Importe otros conceptos 
+            formatted_line += '{:.2f}'.format(self.importeOtrosConceptos(tipo_operacion,comprobante,53)).replace('.', ',').rjust(16,'0') #Importe otros conceptos 
             formatted_line += '{:.2f}'.format(self.ImporteIva(apunte,tipo_operacion)).replace('.', ',').rjust(16, '0') #Importe IVA 
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0') #Monto sujeto a retención (Neto) 
             formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0') #Alicuota
@@ -273,7 +273,10 @@ class DDJJExport:
             if tipo_operacion == 1:
                 return comprobante.matched_amount
             else:
-                return comprobante.amount_total
+                suma_factura = 0
+                for line in comprobante.matched_move_line_ids:
+                    suma_factura += line.credit
+            return suma_factura
     
     def tipoFactura(self,apunte,tipo_operacion):
         if tipo_operacion ==1:
@@ -391,6 +394,20 @@ class DDJJExport:
                     if 'IVA' in tax.name:
                         iva_amount += line.debit - line.credit
             return iva_amount
+    def importeOtrosConceptos(self,tipo_operacion,comprobante,taxgroup):
+        if tipo_operacion == 1:
+            return 0
+        else:
+            base_retencion = 0
+            monto_retencion = 0
+            suma_factura = 0
+            for retencion in comprobante.l10n_ar_withholding_line_ids:
+                if line.tax_id.tax_group_id.id == taxgroup:
+                    base_retencion= retencion.base_amount
+                    monto_retencion = retencion.amount
+            for line in comprobante.matched_move_line_ids:
+                suma_factura += line.credit
+        return suma_factura - base_retencion - monto_retencion
     def montoSujetoARetencion(self,comprobante,taxgroup,tipo_operacion):
         if tipo_operacion == 1:
             retenido = 0
