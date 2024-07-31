@@ -404,7 +404,13 @@ class DDJJExport:
                     base_retencion= retencion.base_amount
                     monto_retencion = retencion.amount
             for line in comprobante.matched_move_line_ids:
-                suma_factura += line.credit
+                if line.full_reconcile_id:
+                    related_movements = self.record.env['account.move.line'].search([
+                    ('full_reconcile_id', '=', line.full_reconcile_id.id)
+                    0])
+                    credit_sum = sum(line.credit for line in related_movements if line.credit > 0)
+                    # Puedes almacenar o usar 'credit_sum' según sea necesario
+                    suma_factura = credit_sum
             return suma_factura - base_retencion - monto_retencion
         else:
             return 0
