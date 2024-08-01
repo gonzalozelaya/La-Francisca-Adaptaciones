@@ -37,6 +37,31 @@ class AccountDDJJ(models.Model):
         compute='_compute_apunte_ids',
         store=True,)
     
+    @api.onchange('municipalidad')
+    def _onchange_municipalidad(self):
+        if self.municipalidad == 'sicore':
+            self.apuntes_a_mostrar = '1'  # Asignar un valor por defecto
+            self._fields['apuntes_a_mostrar'].selection = [
+                ('1', 'Retenciones')
+            ]
+        elif self.municipalidad == 'caba':
+            self.apuntes_a_mostrar = '1'
+            self._fields['apuntes_a_mostrar'].selection = [
+                ('1', 'Retenciones y Percepciones'),
+                ('4', 'Notas de credito')
+            ]
+        elif self.municipalidad == 'jujuy':
+            self.apuntes_a_mostrar = '2'
+            self._fields['apuntes_a_mostrar'].selection = [
+                ('2', 'Retenciones'),
+                ('3', 'Percepciones')
+            ]
+        elif self.municipalidad == 'tucuman':
+            self.apuntes_a_mostrar = '1'
+            self._fields['apuntes_a_mostrar'].selection = [
+                ('1', 'Retenciones y Percepciones'),
+                ('4', 'Notas de crédito')
+            ]
     
     @api.depends('date_start','date_end','municipalidad','apuntes_a_mostrar')
     def _compute_apunte_ids(self):
@@ -135,10 +160,51 @@ class DDJJExport:
         return "\n".join(formatted_lines)
     #Pendiente
     def format_jujuy_ret_dat(self, record):
-        return
+        formatted_lines = []
+        for apunte in record.apunte_ids:
+            tipo_operacion = self.tipoOperacion(apunte)
+            comprobante = self.obtenerComprobante(apunte,tipo_operacion)
+            formatted_line = str('R-1483').ljust(10,' ')
+            formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).ljust(11,' ')
+            formatted_line += str(self.razonSocial(apunte.partner_id)).ljust(60,' ')
+            formatted_line += 'S'
+            #formatted_line += str(self.localidadPartner(apunte.partner_id)).ljust(20,' ')
+            #formatted_line += str(self.domicilioPartner(apunte.partner_id)).ljust(60, ' ')
+            #formatted_line += str(self.codigoPostalPartner(apunte.partner_id)).ljust(10, ' ')
+            #formatted_line += str(apunte.date.strftime('%Y%m%d')).ljust(8,' ')
+            formatted_line += str('2272').ljust(6,' ')
+            formatted_line += str(apunte.date.strftime('%Y')).ljust(4,' ')
+            formatted_line += str(apunte.date.strftime('%Y%m%d')).ljust(4,' ')
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,54,tipo_operacion)).replace('.','').rjust(12, ' ')
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,54,tipo_operacion)).replace('.','').rjust(4,'0') #Alicuota
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,54,tipo_operacion)).replace('.','').rjust(10, ' ')
+            formatted_line += str('  ')
+            formatted_line += str('0').ljust(11,'0')
+            formatted_lines.append(formatted_line)
+            
+        return "\n".join(formatted_lines)
     def format_jujuy_ret_enc(self, record):
-        
-        return
+        formatted_lines = []
+        for apunte in record.apunte_ids:
+            tipo_operacion = self.tipoOperacion(apunte)
+            comprobante = self.obtenerComprobante(apunte,tipo_operacion)
+            formatted_line = str('NCON').rjust(6,' ')
+            formatted_line += str(apunte.date.strftime('%Y')).ljust(4,' ')
+            formatted_line += str(self.tipoComprobanteOrigen(tipo_operacion,apunte)).rjust(2,' ')
+            formatted_line = str('NSUF').rjust(4,'0')
+            formatted_line += str(comprobante.sequence_number).rjust(8,' ')
+            formatted_line += str(comprobante.date.strftime('%Y%m%d')).rjust(8,'0')           #Fecha de comprobante
+            formatted_line += '{:.2f}'.format(self.montoComprobante(comprobante,tipo_operacion)).replace('.', '').rjust(12,'0')
+            formatted_line = str('NSU').rjust(3,'0')
+            formatted_line += str(comprobante.date.strftime('%Y%m')).rjust(6,'0')
+            formatted_line = str('NSU').rjust(1,'0')
+            #formatted_line += str(self.localidadPartner(apunte.partner_id)).ljust(20,' ')
+            #formatted_line += str(self.domicilioPartner(apunte.partner_id)).ljust(60, ' ')
+            #formatted_line += str(self.codigoPostalPartner(apunte.partner_id)).ljust(10, ' ')
+            #formatted_line += str(apunte.date.strftime('%Y%m%d')).ljust(8,' ')
+            formatted_lines.append(formatted_line)
+            
+        return "\n".join(formatted_lines)
     def format_jujuy_perc(self, record):
         formatted_lines = []
         for apunte in record.apunte_ids:
@@ -160,7 +226,7 @@ class DDJJExport:
             formatted_line += str('   ')
             formatted_line += str(comprobante.sequence_number).rjust(8,'0')
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,54,tipo_operacion)).replace('.','').rjust(12, ' ')
-            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,54,tipo_operacion)).replace('.','').rjust(4, ' ') #Alicuota
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,54,tipo_operacion)).replace('.','').rjust(4,'0') #Alicuota
             formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,54,tipo_operacion)).replace('.','').rjust(10, ' ')
             formatted_line += str('  ')
             formatted_line += str('0').ljust(11,'0')
@@ -308,7 +374,25 @@ class DDJJExport:
                     'target': 'self',
                 }
             else:
-                return
+                txt_content = self.format_jujuy_ret_dat(self.record)
+                datos_content = self.format_jujuy_ret_enc(self.record)
+                # Codificar el contenido en base64
+                txt_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
+                datos_content_base64 = base64.b64encode(datos_content.encode('utf-8')).decode('utf-8')
+                # Crear un adjunto en Odoo
+                attachment = self.record.env['ir.attachment'].create({
+                    'name': 'JujuyDatos.txt',
+                    'type': 'binary',
+                    'datas': txt_content_base64,
+                    'mimetype': 'text/plain',
+                })
+                attachment2 = self.record.env['ir.attachment'].create({
+                    'name': 'JujuyEnc.txt',
+                    'type': 'binary',
+                    'datas': datos_content_base64,
+                    'mimetype': 'text/plain',
+                })
+                return self.download_zip(self.record,[attachment.id,attachment2.id])
         else:
             return
     
@@ -390,17 +474,17 @@ class DDJJExport:
             return 1
     def tipoComprobanteOrigen(self,tipo_operacion, apunte):
         if tipo_operacion == 1:
-            return '03'
+            return '3'
         else:
             factura = apunte.move_id
             if factura.l10n_latam_document_type_id.internal_type == 'Invoice':
-                return '01'
+                return '1'
             elif factura.l10n_latam_document_type_id.internal_type == 'Debit Notes':
-                return '02'
+                return '2'
             elif factura.l10n_latam_document_type_id.internal_type == 'Credit Notes':
-                return '09'
+                return '9'
             else:
-                return '01'   
+                return '1'   
     
     def buscarNroCertificado(self,pago,taxgroup,tipo_operacion):
         cert = ''
