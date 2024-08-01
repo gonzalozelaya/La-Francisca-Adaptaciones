@@ -144,9 +144,9 @@ class DDJJExport:
         for apunte in record.apunte_ids:
             tipo_operacion = self.tipoOperacion(apunte)
             comprobante = self.obtenerComprobante(apunte,tipo_operacion)
-            formatted_line = str('P-475').rjust(10,' ')
-            formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).rjust(11,' ')
-            formatted_line += str(self.razonSocial(apunte.partner_id)).rjust(60,' ')
+            formatted_line = str('P-475').ljust(10,' ')
+            formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).ljust(11,' ')
+            formatted_line += str(self.razonSocial(apunte.partner_id)).ljust(60,' ')
             formatted_line += 'S'
             formatted_line += ' 6'
             formatted_line += str(self.localidadPartner(apunte.partner_id)).ljust(20,' ')
@@ -155,11 +155,15 @@ class DDJJExport:
             formatted_line += str(apunte.date.strftime('%Y%m%d')).ljust(8,' ')
             formatted_line += str(' ').rjust(6,' ')
             formatted_line += str(apunte.date.strftime('%Y')).ljust(4,' ')
-            formatted_line += str(self.tipoComprobanteJujuy(comprobante,tipo_operacion)).rjust(1)
+            formatted_line += str(self.tipoComprobanteJujuy(comprobante,tipo_operacion)).rjust(2,'0')
             formatted_line += str('0016').ljust(4,'0')
             formatted_line += str('   ')
             formatted_line += str(comprobante.sequence_number).rjust(8,'0')
-            
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,54,tipo_operacion)).replace('.','').rjust(12, ' ')
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,54,tipo_operacion)).rjust(4, ' ') #Alicuota
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,54,tipo_operacion)).rjust(10, ' ')
+            formatted_line += str('   ')
+            formatted_line += str('0').ljust(11,'0')
             formatted_lines.append(formatted_line)
             
         return "\n".join(formatted_lines)
@@ -205,7 +209,7 @@ class DDJJExport:
             formatted_line += (str(self.provinciaPartner(apunte.partner_id))[:15] if len(str(self.provinciaPartner(apunte.partner_id))) > 15 else str(self.provinciaPartner(apunte.partner_id))).ljust(15,' ')
             formatted_line += str('').ljust(15,' ')
             formatted_line += (str(self.codigoPostalPartner(apunte.partner_id))[:8] if len(str(self.codigoPostalPartner(apunte.partner_id))) > 8 else str(self.codigoPostalPartner(apunte.partner_id))).ljust(8,' ')
-            
+
             formatted_lines.append(formatted_line)
         return "\n".join(formatted_lines)
     
@@ -221,9 +225,9 @@ class DDJJExport:
             formatted_line += str(self.tipoFactura(apunte,tipo_operacion)).rjust(2,'0')
             formatted_line += str(1).rjust(4,'0')  
             formatted_line += str(comprobante.sequence_number).rjust(8,'0')
-            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,54,tipo_operacion)).rjust(15, '0')
-            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,54,tipo_operacion)).rjust(6, '0') #Alicuota
-            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,54,tipo_operacion)).rjust(15, '0')
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,55,tipo_operacion)).rjust(15, '0')
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,55,tipo_operacion)).rjust(6, '0') #Alicuota
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,55,tipo_operacion)).rjust(15, '0')
             
             formatted_lines.append(formatted_line)
         return "\n".join(formatted_lines)
@@ -508,6 +512,8 @@ class DDJJExport:
             monto_alicuota = 0
             perc_group = 1
             if taxgroup == 54:
+                perc_group = 20
+            if taxgroup == 55:
                 perc_group = 28
             for line in comprobante.invoice_line_ids:
                 for tax in line.tax_ids:
