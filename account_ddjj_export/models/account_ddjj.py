@@ -160,9 +160,9 @@ class DDJJExport:
             formatted_line += str('   ')
             formatted_line += str(comprobante.sequence_number).rjust(8,'0')
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,54,tipo_operacion)).replace('.','').rjust(12, ' ')
-            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,54,tipo_operacion)).rjust(4, ' ') #Alicuota
-            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,54,tipo_operacion)).rjust(10, ' ')
-            formatted_line += str('   ')
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,54,tipo_operacion)).replace('.','').rjust(4, ' ') #Alicuota
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,54,tipo_operacion)).replace('.','').rjust(10, ' ')
+            formatted_line += str('  ')
             formatted_line += str('0').ljust(11,'0')
             formatted_lines.append(formatted_line)
             
@@ -496,7 +496,10 @@ class DDJJExport:
                     retenido = line.base_amount
             return retenido
         else:
-            return comprobante.amount_untaxed
+            if self.record.municipalidad == 'jujuy':
+                return -comprobante.amount_untaxed
+            else:
+                return comprobante.amount_untaxed
 
     def porcentajeAlicuota(self,comprobante,taxgroup,tipo_operacion):
         if tipo_operacion == 1:
@@ -532,8 +535,12 @@ class DDJJExport:
         else:
             if apunte.credit > 0:
                 return apunte.credit
-            else:
-                return apunte.debit
+            elif apunte.debit > 0:
+                if self.record.municipalidad == 'jujuy':
+                    return -apunte.debit
+                else: 
+                    return apunte.debit
+            
             
     def download_zip(self,record, attachment_ids):
             # Obtener los archivos adjuntos
