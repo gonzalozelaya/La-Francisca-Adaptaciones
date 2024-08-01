@@ -45,7 +45,7 @@ class AccountDDJJ(models.Model):
             if self.municipalidad == 'sicore':
                 account_code =['2.1.3.04.020']
             if self.municipalidad == 'jujuy':
-                account_code = ['2.1.3.02.150']
+                account_code = ['2.1.3.02.150','2.1.3.02.160']
             elif self.municipalidad == 'caba':
                 account_code = ['2.1.3.02.030','2.1.3.02.040']
             elif self.municipalidad == 'tucuman':
@@ -135,8 +135,12 @@ class DDJJExport:
         return "\n".join(formatted_lines)
     #Pendiente
     def format_jujuy_ret_dat(self, record):
-        formatted_lines = []
+        return
+    def format_jujuy_ret_enc(self, record):
         
+        return
+    def format_jujuy_perc(self, record):
+        formatted_lines = []
         for apunte in record.apunte_ids:
             tipo_operacion = self.tipoOperacion(apunte)
             comprobante = self.obtenerComprobante(apunte,tipo_operacion)
@@ -149,15 +153,16 @@ class DDJJExport:
             formatted_line += str(self.domicilioPartner(apunte.partner_id)).ljust(60, ' ')
             formatted_line += str(self.codigoPostalPartner(apunte.partner_id)).ljust(10, ' ')
             formatted_line += str(apunte.date.strftime('%Y%m%d')).ljust(8,' ')
+            formatted_line += str(' ').rjust(6,' ')
+            formatted_line += str(apunte.date.strftime('%Y')).ljust(4,' ')
+            formatted_line += str(self.tipoComprobanteJujuy(comprobante,tipo_operacion)).rjust(1)
+            formatted_line += str('0016').ljust(4,'0')
+            formatted_line += str('   ')
+            formatted_line += str(comprobante.sequence_number).rjust(8,'0')
+            
             formatted_lines.append(formatted_line)
             
         return "\n".join(formatted_lines)
-    def format_jujuy_ret_enc(self, record):
-        
-        return
-    def format_jujuy_perc(self, record):
-        
-        return
     #Pendiente
     def format_sicore(self, record):
         formatted_lines = []
@@ -278,6 +283,28 @@ class DDJJExport:
                 'url': '/web/content/%s?download=true' % attachment.id,
                 'target': 'self',
             }
+        if self.record.municipalidad == 'jujuy':
+            if self.record.apuntes_a_mostrar == '3':
+                txt_content = self.format_jujuy_perc(self.record)
+                
+                # Codificar el contenido en base64
+                file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
+
+                # Crear un adjunto en Odoo
+                attachment = self.record.env['ir.attachment'].create({
+                    'name': 'RetPer_AGIP.txt',
+                    'type': 'binary',
+                    'datas': file_content_base64,
+                    'mimetype': 'text/plain',
+                })
+                
+                return {
+                    'type': 'ir.actions.act_url',
+                    'url': '/web/content/%s?download=true' % attachment.id,
+                    'target': 'self',
+                }
+            else:
+                return
         else:
             return
     
@@ -325,6 +352,18 @@ class DDJJExport:
                 comp = 3
             if comprobante.move_type == 'out_receipt' or comprobante.move_type == 'in_receipt':
                 comp = 4
+            return comp
+    def tipoComprobanteJujuy(self,comprobante,tipo_operacion):
+        if tipo_operacion == 1:
+            return 0
+        else:
+            comp = 1
+            if comprobante.move_type == 'out_invoice' or comprobante.move_type == 'in_invoice':
+                comp = 1
+            if comprobante.move_type == 'out_refund' or comprobante.move_type == 'in_refund':
+                comp = 20
+            if comprobante.move_type == 'out_receipt' or comprobante.move_type == 'in_receipt':
+                comp = 5
             return comp
     def tipoComprobanteSicore(self,comprobante,tipo_operacion):
         if tipo_operacion == 1:
