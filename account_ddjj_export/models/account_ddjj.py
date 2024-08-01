@@ -134,7 +134,28 @@ class DDJJExport:
             
         return "\n".join(formatted_lines)
     #Pendiente
-    def format_jujuy(self, record):
+    def format_jujuy_ret_dat(self, record):
+        formatted_lines = []
+        
+        for apunte in record.apunte_ids:
+            tipo_operacion = self.tipoOperacion(apunte)
+            comprobante = self.obtenerComprobante(apunte,tipo_operacion)
+            formatted_line = str('P-475').rjust(10,' ')
+            formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).rjust(11,' ')
+            formatted_line += str(self.razonSocial(apunte.partner_id)).rjust(60,' ')
+            formatted_line += 'S'
+            formatted_line += ' 6'
+            formatted_line += str(self.localidadPartner(apunte.partner_id)).ljust(20,' ')
+            formatted_line += str(self.domicilioPartner(apunte.partner_id)).ljust(60, ' ')
+            formatted_line += str(self.codigoPostalPartner(apunte.partner_id)).ljust(10, ' ')
+            formatted_line += str(apunte.date.strftime('%Y%m%d')).ljust(8,' ')
+            formatted_lines.append(formatted_line)
+            
+        return "\n".join(formatted_lines)
+    def format_jujuy_ret_enc(self, record):
+        
+        return
+    def format_jujuy_perc(self, record):
         
         return
     #Pendiente
