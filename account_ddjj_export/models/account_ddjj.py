@@ -28,6 +28,28 @@ class AccountDDJJ(models.Model):
         ('3', 'Percepciones'),
         ('4', 'Notas de credito')
     ], default='1')
+    
+    apuntes_jujuy =  fields.Selection(string='Apuntes a exportar', selection=[
+        ('2', 'Retenciones'),
+        ('3', 'Percepciones'),
+    ], default='2')
+    
+    apuntes_tucuman =  fields.Selection(string='Apuntes a exportar', selection=[
+        ('1', 'Retenciones y Percepciones'),
+        ('4', 'Notas de credito')
+    ], default='1')
+    
+    apuntes_sicore =  fields.Selection(string='Apuntes a exportar', selection=[
+        ('2', 'Retenciones'),
+    ], default='2')
+    
+    apuntes_caba =  fields.Selection(string='Apuntes a exportar', selection=[
+        ('1', 'Retenciones y Percepciones'),
+        ('2', 'Retenciones'),
+        ('3', 'Percepciones'),
+        ('4', 'Notas de credito')
+    ], default='1')
+    
     apunte_ids = fields.Many2many(
         comodel_name='account.move.line',
         relation='account_ddjj_move_line_rel',
@@ -37,31 +59,7 @@ class AccountDDJJ(models.Model):
         compute='_compute_apunte_ids',
         store=True,)
     
-    @api.onchange('municipalidad')
-    def _onchange_municipalidad(self):
-        if self.municipalidad == 'sicore':
-            self.apuntes_a_mostrar = '1'  # Asignar un valor por defecto
-            self._fields['apuntes_a_mostrar'].selection = [
-                ('1', 'Retenciones')
-            ]
-        elif self.municipalidad == 'caba':
-            self.apuntes_a_mostrar = '1'
-            self._fields['apuntes_a_mostrar'].selection = [
-                ('1', 'Retenciones y Percepciones'),
-                ('4', 'Notas de credito')
-            ]
-        elif self.municipalidad == 'jujuy':
-            self.apuntes_a_mostrar = '2'
-            self._fields['apuntes_a_mostrar'].selection = [
-                ('2', 'Retenciones'),
-                ('3', 'Percepciones')
-            ]
-        elif self.municipalidad == 'tucuman':
-            self.apuntes_a_mostrar = '1'
-            self._fields['apuntes_a_mostrar'].selection = [
-                ('1', 'Retenciones y Percepciones'),
-                ('4', 'Notas de crédito')
-            ]
+    
     
     @api.depends('date_start','date_end','municipalidad','apuntes_a_mostrar')
     def _compute_apunte_ids(self):

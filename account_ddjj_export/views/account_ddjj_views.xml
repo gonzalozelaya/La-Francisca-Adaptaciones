@@ -16,6 +16,16 @@
               <field name="date_end"/>
               <field name="municipalidad"/>
               <field name="apuntes_a_mostrar"/>
+              <group>
+                <!-- Select para SICORE -->
+                <field name="apuntes_sicore" attrs="{'invisible': [('municipalidad', '!=', 'sicore')]}"/>
+                <!-- Select para AGIP (Caba) -->
+                <field name="apuntes_caba" attrs="{'invisible': [('municipalidad', '!=', 'caba')]}"/>
+                <!-- Select para Jujuy -->
+                <field name="apuntes_jujuy" attrs="{'invisible': [('municipalidad', '!=', 'jujuy')]}"/>
+                <!-- Select para Tucumán -->
+                <field name="apuntes_tucuman" attrs="{'invisible': [('municipalidad', '!=', 'tucuman')]}"/>
+              </group>
               <field name="apunte_ids"/>
             </group>
           </sheet>
