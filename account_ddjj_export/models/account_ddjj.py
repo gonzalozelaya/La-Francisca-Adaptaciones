@@ -147,7 +147,7 @@ class DDJJExport:
             formatted_line += str(self.situacionIva(apunte.partner_id))        #Situacion IVA
             formatted_line += (str(self.razonSocial(apunte.partner_id))[:30] if len(str(self.razonSocial(apunte.partner_id))) > 30 else str(self.razonSocial(apunte.partner_id))).ljust(30, ' ') #Razon social
             formatted_line += '{:.2f}'.format(self.importeOtrosConceptos(tipo_operacion,comprobante,53)).replace('.', ',').rjust(16,'0') #Importe otros conceptos 
-            formatted_line += '{:.2f}'.format(self.ImporteIva(apunte,tipo_operacion)).replace('.', ',').rjust(16,'0') #Importe IVA 
+            formatted_line += '{:.2f}'.format(self.ImporteIva(apunte,comprobante,tipo_operacion)).replace('.', ',').rjust(16,'0') #Importe IVA 
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0') #Monto sujeto a retención (Neto) 
             formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,53,tipo_operacion)).replace('.', ',').rjust(5, '0') #Alicuota
             formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0')
@@ -540,16 +540,12 @@ class DDJJExport:
         return contacto.state_id.name
     def codigoPostalPartner(self, contacto):
         return contacto.zip
-    def ImporteIva(self,apunte,tipo_operacion):
+    def ImporteIva(self,apunte,comprobante,tipo_operacion):
         if tipo_operacion == 1:
             return 0
         else:
-            iva_amount = 0.0
-            for line in apunte.move_id.line_ids:
-                for tax in line.tax_ids:
-                    if 'IVA' in tax.name:
-                        iva_amount += line.debit - line.credit
-            return iva_amount
+           iva_amount = self.montoComprobante(comprobante,tipo_operacion)-self.montoRetenido(apunte,comprobante,53,tipo_operacion) - self.montoSujetoARetencion(comprobante,53,tipo_operacion)
+           return iva_amount
     def importeOtrosConceptos(self,tipo_operacion,comprobante,taxgroup):
         if tipo_operacion == 1:
             base_retencion = 0
