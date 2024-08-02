@@ -543,7 +543,7 @@ class DDJJExport:
         if tipo_operacion == 1:
             return 0
         else:
-           iva_amount = self.montoComprobante(comprobante,tipo_operacion)-self.montoRetenido(apunte,comprobante,53,tipo_operacion) - self.montoSujetoARetencion(comprobante,53,tipo_operacion)
+           iva_amount = self.montoComprobante(comprobante,tipo_operacion)-self.montoRetenido(apunte,comprobante,53,tipo_operacion)
            return iva_amount
     def importeOtrosConceptos(self,tipo_operacion,comprobante,taxgroup):
         if tipo_operacion == 1:
