@@ -155,7 +155,7 @@ class DDJJExport:
              
             formatted_lines.append(formatted_line)
             formatted_lines_reversed = list(reversed(formatted_lines))
-            formatted_lines.append('')
+        formatted_lines.append('')
         return "\n".join(formatted_lines_reversed)
     #Pendiente
     def format_jujuy_ret_dat(self, record):
