@@ -593,6 +593,8 @@ class DDJJExport:
         else:
             monto_alicuota = 0
             perc_group = 1
+            if taxgroup == 53:
+                perc_group = 14
             if taxgroup == 54:
                 perc_group = 20
             if taxgroup == 55:
