@@ -558,7 +558,7 @@ class DDJJExport:
             for retencion in comprobante.l10n_ar_withholding_line_ids:
                 if retencion.tax_id.tax_group_id.id == taxgroup:
                     base_retencion= retencion.base_amount
-                    monto_retencion = retencion.amount
+                    monto_retencion += retencion.amount
             for line in comprobante.matched_move_line_ids:
                 if line.full_reconcile_id:
                     related_movements = self.record.env['account.move.line'].search([
@@ -567,9 +567,10 @@ class DDJJExport:
                     suma_factura += credit_sum
                 elif not line.full_reconcile_id:
                     suma_factura += line.credit
-            return suma_factura - base_retencion - monto_retencion
+            return (suma_factura - base_retencion)
         else:
             return 0
+        
             
     def montoSujetoARetencion(self,comprobante,taxgroup,tipo_operacion):
         if tipo_operacion == 1:
