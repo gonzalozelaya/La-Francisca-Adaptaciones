@@ -146,8 +146,8 @@ class DDJJExport:
             formatted_line += str(self.nroIb(apunte.partner_id)).rjust(11,'0')  #Nro IB
             formatted_line += str(self.situacionIva(apunte.partner_id))        #Situacion IVA
             formatted_line += (str(self.razonSocial(apunte.partner_id))[:30] if len(str(self.razonSocial(apunte.partner_id))) > 30 else str(self.razonSocial(apunte.partner_id))).ljust(30, ' ') #Razon social
-            formatted_line += '{:.2f}'.format(self.importeOtrosConceptos(tipo_operacion,comprobante,53)).replace('.', ',').rjust(16,'0') #Importe otros conceptos 
-            formatted_line += '{:.2f}'.format(self.ImporteIva(apunte,comprobante,tipo_operacion)).replace('.', ',').rjust(16,'0') #Importe IVA 
+            formatted_line += '{:.2f}'.format(self.importeOtrosConceptos(apunte,tipo_operacion,comprobante,53)).replace('.', ',').rjust(16,'0') #Importe otros conceptos 
+            formatted_line += '{:.2f}'.format(self.ImporteIva(apunte,comprobante,tipo_operacion,53)).replace('.', ',').rjust(16,'0') #Importe IVA 
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0') #Monto sujeto a retención (Neto) 
             formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,53,tipo_operacion)).replace('.', ',').rjust(5, '0') #Alicuota
             formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0')
@@ -539,13 +539,13 @@ class DDJJExport:
         return contacto.state_id.name
     def codigoPostalPartner(self, contacto):
         return contacto.zip
-    def ImporteIva(self,apunte,comprobante,tipo_operacion):
+    def ImporteIva(self,apunte,comprobante,tipo_operacion,taxgroup):
         if tipo_operacion == 1:
             return 0
         else:
-           iva_amount = self.montoComprobante(comprobante,tipo_operacion)-self.montoRetenido(apunte,comprobante,53,tipo_operacion)
+           iva_amount = self.montoComprobante(comprobante,tipo_operacion)-self.montoSujetoARetencion(comprobante,taxgroup,tipo_operacion) -self.montoRetenido(apunte,comprobante,taxgroup,tipo_operacion)
            return iva_amount
-    def importeOtrosConceptos(self,tipo_operacion,comprobante,taxgroup):
+    def importeOtrosConceptos(self,apunte,tipo_operacion,comprobante,taxgroup):
         if tipo_operacion == 1:
             base_retencion = 0
             monto_retencion = 0
@@ -564,7 +564,7 @@ class DDJJExport:
                     suma_factura += line.credit
             return (suma_factura - base_retencion)
         else:
-            return 0
+            self.montoRetenido(apunte,comprobante,taxgroup)
         
             
     def montoSujetoARetencion(self,comprobante,taxgroup,tipo_operacion):
