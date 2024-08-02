@@ -155,7 +155,7 @@ class DDJJExport:
              
             formatted_lines.append(formatted_line)
             formatted_lines_reversed = list(reversed(formatted_lines))
-            
+            formatted_lines.append('')
         return "\n".join(formatted_lines_reversed)
     #Pendiente
     def format_jujuy_ret_dat(self, record):
@@ -299,7 +299,6 @@ class DDJJExport:
     def exportToTxt(self):
         if self.record.municipalidad == 'caba':
             txt_content = self.format_line(self.record)
-            
             # Codificar el contenido en base64
             file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
 
