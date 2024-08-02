@@ -564,7 +564,7 @@ class DDJJExport:
                     suma_factura += line.credit
             return (suma_factura - base_retencion)
         else:
-            self.montoRetenido(apunte,comprobante,taxgroup)
+            return self.montoRetenido(apunte,comprobante,taxgroup,tipo_operacion)
         
             
     def montoSujetoARetencion(self,comprobante,taxgroup,tipo_operacion):
