@@ -15,11 +15,11 @@
               <group>
                 <field name="simple_mode"/>
               </group>
-              <group attrs="{'invisible': [('simple_mode', '=', False)]}">
+              <group invisible='simple_mode == False'>
                   <field name="month"/>
                   <field name="year"/>
               </group>
-              <group attrs="{'invisible': [('simple_mode', '=', True)]}">
+              <group invisible='simple_mode == True'>
                   <field name="date_start"/>
                   <field name="date_end"/>
               </group>
