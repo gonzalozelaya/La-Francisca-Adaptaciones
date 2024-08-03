@@ -3,8 +3,7 @@ import base64
 from io import StringIO
 import io
 import zipfile
-from datetime import datetime
-
+from datetime import datetime, date, timedelta
 class AccountDDJJ(models.Model):
     _name = 'account.ddjj'
     _description = 'Modelo para DDJJ de cuentas'
@@ -12,6 +11,15 @@ class AccountDDJJ(models.Model):
     name = fields.Char(string='Nombre', required=True)
     date_start = fields.Date(string='Fecha Inicio', required=True,default=lambda self: fields.Date.to_string(datetime(datetime.now().year, datetime.now().month, 1)))
     date_end = fields.Date(string='Fecha Fin', required=True, default=lambda self: fields.Date.today())
+    month = fields.Selection(
+        selection=[(str(n), datetime(2020, n, 1).strftime('%B')) for n in range(1, 13)],
+        string='Mes'
+    )
+    year = fields.Selection(
+        selection=[(str(year), str(year)) for year in range(2000, (datetime.now().year + 1))],
+        string='Año'
+    )
+    simple_mode = fields.Boolean(string='Modo Simple (Por Mes)')
     municipalidad = fields.Selection(
         selection=[
             ('sicore', 'SICORE'),
@@ -23,29 +31,8 @@ class AccountDDJJ(models.Model):
         required=True
     )
     apuntes_a_mostrar =  fields.Selection(string='Apuntes a exportar', selection=[
-        ('1', 'Retenciones y Percepciones'),
-        ('2', 'Retenciones'),
-        ('3', 'Percepciones'),
-        ('4', 'Notas de credito')
-    ], default='1')
-    
-    apuntes_jujuy =  fields.Selection(string='Apuntes a exportar', selection=[
-        ('2', 'Retenciones'),
-        ('3', 'Percepciones'),
-    ], default='2')
-    
-    apuntes_tucuman =  fields.Selection(string='Apuntes a exportar', selection=[
-        ('1', 'Retenciones y Percepciones'),
-        ('4', 'Notas de credito')
-    ], default='1')
-    
-    apuntes_sicore =  fields.Selection(string='Apuntes a exportar', selection=[
-        ('2', 'Retenciones'),
-    ], default='2')
-    
-    apuntes_caba =  fields.Selection(string='Apuntes a exportar', selection=[
-        ('1', 'Retenciones y Percepciones'),
-        ('2', 'Retenciones'),
+    ('1', 'Retenciones y Percepciones'),
+       ('2', 'Retenciones'),
         ('3', 'Percepciones'),
         ('4', 'Notas de credito')
     ], default='1')
@@ -59,7 +46,18 @@ class AccountDDJJ(models.Model):
         compute='_compute_apunte_ids',
         store=True,)
     
-    
+    @api.onchange('month', 'year', 'simple_mode')
+    def _onchange_month_year(self):
+        if self.simple_mode and self.month and self.year:
+            year = int(self.year)
+            month = int(self.month)
+            self.date_start = date(year, month, 1)
+            next_month = month % 12 + 1
+            next_month_year = year if month < 12 else year + 1
+            self.date_end = date(next_month_year, next_month, 1) - timedelta(days=1)
+        elif not self.simple_mode:
+            self.date_start = fields.Date.to_string(datetime(datetime.now().year, datetime.now().month, 1))
+            self.date_end = fields.Date.today()
     
     @api.depends('date_start','date_end','municipalidad','apuntes_a_mostrar')
     def _compute_apunte_ids(self):
@@ -221,12 +219,12 @@ class DDJJExport:
             formatted_line += str(' ').rjust(6,' ')
             formatted_line += str(apunte.date.strftime('%Y')).ljust(4,' ')
             formatted_line += str(self.tipoComprobanteJujuy(comprobante,tipo_operacion)).rjust(2,'0')
-            formatted_line += str('0016').ljust(4,'0')
+            formatted_line += str('0032').ljust(4,'0')
             formatted_line += str('   ')
             formatted_line += str(comprobante.sequence_number).rjust(8,'0')
-            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,54,tipo_operacion)).replace('.','').rjust(12, ' ')
-            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,54,tipo_operacion)).replace('.','').rjust(4,'0') #Alicuota
-            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,54,tipo_operacion)).replace('.','').rjust(10, ' ')
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,56,tipo_operacion)).replace('.','').rjust(12, ' ')
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,56,tipo_operacion)).replace('.','').rjust(4,'0') #Alicuota
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,56,tipo_operacion)).replace('.','').rjust(10, ' ')
             formatted_line += str('  ')
             formatted_line += str('0').ljust(11,'0')
             formatted_lines.append(formatted_line)
@@ -575,10 +573,7 @@ class DDJJExport:
                     retenido = line.base_amount
             return retenido
         else:
-            if self.record.municipalidad == 'jujuy':
-                return -comprobante.amount_untaxed
-            else:
-                return comprobante.amount_untaxed
+            return comprobante.amount_untaxed
 
     def porcentajeAlicuota(self,comprobante,taxgroup,tipo_operacion):
         if tipo_operacion == 1:
