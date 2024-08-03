@@ -31,7 +31,7 @@ class AccountDDJJ(models.TransientModel):
         string='Año',
         default=_get_default_year
     )
-    simple_mode = fields.Boolean(string='Modo Simple (Por Mes)')
+    simple_mode = fields.Boolean(string='Fechas específicas')
     municipalidad = fields.Selection(
         selection=[
             ('sicore', 'SICORE'),
