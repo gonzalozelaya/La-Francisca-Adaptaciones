@@ -4,7 +4,7 @@ from io import StringIO
 import io
 import zipfile
 from datetime import datetime, date, timedelta
-class AccountDDJJ(models.Model):
+class AccountDDJJ(models.TransientModel):
     _name = 'account.ddjj'
     _description = 'Modelo para DDJJ de cuentas'
 

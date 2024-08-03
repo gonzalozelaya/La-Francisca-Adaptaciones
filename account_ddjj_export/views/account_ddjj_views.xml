@@ -12,8 +12,8 @@
           <sheet>
             <group>
               <field name="name"/>
+              <field name="simple_mode"/>
               <group invisible='simple_mode == False'>
-                  <field name="simple_mode"/>
                   <field name="month"/>
                   <field name="year"/>
               </group>
@@ -30,7 +30,7 @@
       </field>
     </record>
 
-    <!-- Vista de lista para el modelo account.ddjj -->
+    <!-- Vista de lista para el modelo account.ddjj 
     <record model="ir.ui.view" id="view_account_ddjj_tree">
       <field name="name">account.ddjj.tree</field>
       <field name="model">account.ddjj</field>
@@ -42,17 +42,20 @@
           <field name="municipalidad"/>
         </tree>
       </field>
-    </record>
+    </record>-->
 
     <!-- Acción para el modelo account.ddjj -->
     <record model="ir.actions.act_window" id="action_account_ddjj">
       <field name="name">Account DDJJ</field>
       <field name="res_model">account.ddjj</field>
-      <field name="view_mode">tree,form</field>
+      <field name="view_mode">form</field>
+      <field name="view_id" ref="view_account_ddjj_form"/>
+      <field name="target">new</field>
     </record>
 
-    <!-- Menú de contabilidad -->
-    <menuitem id="menu_account_ddjj_root" name="DDJJ" parent="account.menu_finance" sequence="10"/>
-    <menuitem id="menu_account_ddjj" name="DDJJ" parent="menu_account_ddjj_root" action="action_account_ddjj"/>
+    <!-- Menú principal para el wizard -->
+    <menuitem id="menu_account_ddjj_root" name="Account DDJJ" sequence="10" />
+    <menuitem id="menu_account_ddjj" name="Account DDJJ"
+          parent="menu_account_ddjj_root" action="action_account_ddjj"/>
   </data>
 </odoo>
