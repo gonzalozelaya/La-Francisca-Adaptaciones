@@ -50,7 +50,7 @@
       <field name="res_model">account.ddjj</field>
       <field name="view_mode">form</field>
       <field name="view_id" ref="view_account_ddjj_form"/>
-      <field name="target">primary</field>
+      <field name="target">current</field>
     </record>
 
     <!-- Menú principal para el wizard -->
