@@ -8,16 +8,28 @@ class AccountDDJJ(models.Model):
     _name = 'account.ddjj'
     _description = 'Modelo para DDJJ de cuentas'
 
+    def _get_default_month(self):
+        return str(datetime.now().month)
+
+    def _get_default_year(self):
+        return str(datetime.now().year)
+    
     name = fields.Char(string='Nombre', required=True)
     date_start = fields.Date(string='Fecha Inicio', required=True,default=lambda self: fields.Date.to_string(datetime(datetime.now().year, datetime.now().month, 1)))
     date_end = fields.Date(string='Fecha Fin', required=True, default=lambda self: fields.Date.today())
     month = fields.Selection(
-        selection=[(str(n), datetime(2020, n, 1).strftime('%B')) for n in range(1, 13)],
-        string='Mes'
+        selection=[
+            ('1', 'Enero'), ('2', 'Febrero'), ('3', 'Marzo'), ('4', 'Abril'),
+            ('5', 'Mayo'), ('6', 'Junio'), ('7', 'Julio'), ('8', 'Agosto'),
+            ('9', 'Septiembre'), ('10', 'Octubre'), ('11', 'Noviembre'), ('12', 'Diciembre')
+        ],
+        string='Mes',
+        default=_get_default_month
     )
     year = fields.Selection(
-        selection=[(str(year), str(year)) for year in range(2000, (datetime.now().year + 1))],
-        string='Año'
+        selection=[(str(year), str(year)) for year in range(datetime.now().year - 2, datetime.now().year + 1)],
+        string='Año',
+        default=_get_default_year
     )
     simple_mode = fields.Boolean(string='Modo Simple (Por Mes)')
     municipalidad = fields.Selection(

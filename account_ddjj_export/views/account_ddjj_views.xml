@@ -12,10 +12,8 @@
           <sheet>
             <group>
               <field name="name"/>
-              <group>
-                <field name="simple_mode"/>
-              </group>
               <group invisible='simple_mode == False'>
+                  <field name="simple_mode"/>
                   <field name="month"/>
                   <field name="year"/>
               </group>
