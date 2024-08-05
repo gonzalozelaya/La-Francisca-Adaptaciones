@@ -1,42 +1,57 @@
 <odoo>
-    <!-- Vista de Configuración del Módulo -->
-    <record id="res_config_settings_view_form" model="ir.ui.view">
-        <field name="name">account.ddjj.settings.view.form</field>
-        <field name="model">res.config.settings</field>
-        <field name="priority" eval="15"/>
-        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
-        <field name="arch" type="xml">
-            <xpath expr="//form" position="inside">
-                <app data-string="Account DDJJ Settings" string="Account DDJJ Settings" name="account_ddjj_settings">
-                    <block title="Configuración de DDJJ de Cuentas" name="account_ddjj_block">
-                        <setting string="Grupo de Impuestos"
-                                 help="Seleccione el grupo de impuestos"
-                                 id="tax_group_setting">
-                            <field name="tax_group_id"/>
-                        </setting>
-                        <setting string="Cuenta del Plan de Cuentas"
-                                 help="Seleccione la cuenta del plan de cuentas"
-                                 id="account_setting">
-                            <field name="account_id"/>
-                        </setting>
-                    </block>
-                </app>
-            </xpath>
-        </field>
+  <data>
+    <!-- Vista de formulario para el modelo account.ddjj -->
+    <record model="ir.ui.view" id="view_account_ddjj_form">
+      <field name="name">account.ddjj.form</field>
+      <field name="model">account.ddjj</field>
+      <field name="arch" type="xml">
+        <form string="Account DDJJ">
+          <header>
+            <button name="export_txt" type="object" string="Exportar TXT" class="btn-primary"/>
+          </header>
+          <sheet>
+            <group>
+              <group>
+                  <field name="date_start"/>
+                  <field name="date_end"/>
+              </group>
+              <group>
+                <field name="municipalidad"/>
+                <field name="apuntes_a_mostrar"/>
+              </group>
+              <field name="apunte_ids"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
     </record>
 
-    <!-- Acción para abrir la vista de configuración -->
-    <record id="action_account_ddjj_settings" model="ir.actions.act_window">
-        <field name="name">Configuración de DDJJ de Cuentas</field>
-        <field name="res_model">account.ddjj.settings</field>
-        <field name="view_mode">form</field>
-        <field name="view_id" ref="res_config_settings_view_form"/>
-        <field name="target">new</field>
+    <!-- Vista de lista para el modelo account.ddjj 
+    <record model="ir.ui.view" id="view_account_ddjj_tree">
+      <field name="name">account.ddjj.tree</field>
+      <field name="model">account.ddjj</field>
+      <field name="arch" type="xml">
+        <tree string="Account DDJJ">
+          <field name="name"/>
+          <field name="date_start"/>
+          <field name="date_end"/>
+          <field name="municipalidad"/>
+        </tree>
+      </field>
+    </record>-->
+
+    <!-- Acción para el modelo account.ddjj -->
+    <record model="ir.actions.act_window" id="action_account_ddjj">
+      <field name="name">Account DDJJ</field>
+      <field name="res_model">account.ddjj</field>
+      <field name="view_mode">form</field>
+      <field name="view_id" ref="view_account_ddjj_form"/>
+      <field name="target">current</field>
     </record>
 
-    <!-- Menú para acceder a la configuración -->
-    <menuitem id="menu_account_ddjj_settings" 
-              name="Configuración de DDJJ de Cuentas"
-              parent="base.menu_configuration"
-              action="action_account_ddjj_settings"/>
+    <!-- Menú principal para el wizard -->
+    <menuitem id="menu_account_ddjj_root" name="Account DDJJ" sequence="10" />
+    <menuitem id="menu_account_ddjj" name="Account DDJJ"
+          parent="menu_account_ddjj_root" action="action_account_ddjj"/>
+  </data>
 </odoo>

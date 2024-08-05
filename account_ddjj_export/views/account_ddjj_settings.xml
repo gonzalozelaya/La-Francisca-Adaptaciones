@@ -1,30 +1,42 @@
-<record id="res_config_settings_view_form" model="ir.ui.view">
-   <field name="name">
-       res.config.settings.view.form.inherit.employee.account_ddjj_settings
-   </field>
-   <field name="model">res.config.settings</field>
-   <field name="priority" eval="15"/>
-   <field name="inherit_id" ref="base.res_config_settings_view_form"/>
-   <field name="arch" type="xml">
-       <xpath expr="//form" position="inside">
-           <app data-string="Reportes Mensuales" string="Reportes Mensuales" name="account_ddjj">
-               <block title="Employee Management Settings" name="employee_management">
-                   <setting string="Contract Type"
-                            help="Select the Contract Type"
-                            id="contract_type_setting">
-                       <field name="contract_type"/>
-                       <div class="content-group"
-                            invisible="not contract_type"
-                            id="group_contract_type_setting">
-                           <div class="text-warning mt16">
-                               <strong>Save</strong>
-                               this page and come back here to set up the
-                               feature.
-                           </div>
-                       </div>
-                   </setting>
-               </block>
-           </app>
-       </xpath>
-   </field>
-</record>
+<odoo>
+    <!-- Vista de Configuración del Módulo -->
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">account.ddjj.settings.view.form</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="15"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Account DDJJ Settings" string="Account DDJJ Settings" name="account_ddjj_settings">
+                    <block title="Configuración de DDJJ de Cuentas" name="account_ddjj_block">
+                        <setting string="Grupo de Impuestos"
+                                 help="Seleccione el grupo de impuestos"
+                                 id="tax_group_setting">
+                            <field name="tax_group_id"/>
+                        </setting>
+                        <setting string="Cuenta del Plan de Cuentas"
+                                 help="Seleccione la cuenta del plan de cuentas"
+                                 id="account_setting">
+                            <field name="account_id"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Acción para abrir la vista de configuración -->
+    <record id="action_account_ddjj_settings" model="ir.actions.act_window">
+        <field name="name">Configuración de DDJJ de Cuentas</field>
+        <field name="res_model">account.ddjj.settings</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="res_config_settings_view_form"/>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Menú para acceder a la configuración -->
+    <menuitem id="menu_account_ddjj_settings" 
+              name="Configuración de DDJJ de Cuentas"
+              parent="base.menu_configuration"
+              action="action_account_ddjj_settings"/>
+</odoo>
