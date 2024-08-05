@@ -162,6 +162,7 @@ class DDJJExport:
     def format_jujuy_ret_detalle(self, record):
         formatted_lines = []
         for apunte in record.apunte_ids:
+            tipo_operacion = self.tipoOperacion(apunte)
             comprobante = self.obtenerComprobante(apunte,tipo_operacion)
             reconcile_id = False
             for line in comprobante.matched_move_line_ids:
