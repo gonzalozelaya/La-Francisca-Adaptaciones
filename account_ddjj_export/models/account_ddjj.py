@@ -551,6 +551,11 @@ class DDJJExport:
                     retenido = line.base_amount
             return retenido
         else:
+            if (self.record.municipalidad == 'jujuy'):
+                if comprobante.move_type == 'out_refund' or comprobante.move_type == 'in_refund':
+                    return -comprobante.amount_untaxed
+                else:
+                    return comprobante.amount_untaxed
             return comprobante.amount_untaxed
 
     def porcentajeAlicuota(self,comprobante,taxgroup,tipo_operacion):
@@ -572,6 +577,8 @@ class DDJJExport:
                 perc_group = 20
             if taxgroup == 55:
                 perc_group = 28
+            if taxgroup == 56:
+                perc_group = 20
             for line in comprobante.invoice_line_ids:
                 for tax in line.tax_ids:
                     if tax.tax_group_id.id == perc_group:
