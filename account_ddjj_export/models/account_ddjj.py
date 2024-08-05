@@ -162,24 +162,28 @@ class DDJJExport:
     def format_jujuy_ret_detalle(self, record):
         formatted_lines = []
         for apunte in record.apunte_ids:
-            tipo_operacion = self.tipoOperacion(apunte)
             comprobante = self.obtenerComprobante(apunte,tipo_operacion)
-            formatted_line = str('NCON').rjust(6,' ')
-            formatted_line += str(apunte.date.strftime('%Y')).ljust(4,' ')
-            formatted_line += str(self.tipoComprobanteOrigen(tipo_operacion,apunte)).rjust(2,' ')
-            formatted_line = str('NSUF').rjust(4,'0')
-            formatted_line += str(comprobante.sequence_number).rjust(8,' ')
-            formatted_line += str(comprobante.date.strftime('%Y%m%d')).rjust(8,'0')           #Fecha de comprobante
-            formatted_line += '{:.2f}'.format(self.montoComprobante(comprobante,tipo_operacion)).replace('.', '').rjust(12,'0')
-            formatted_line = str('NSU').rjust(3,'0')
-            formatted_line += str(comprobante.date.strftime('%Y%m')).rjust(6,'0')
-            formatted_line += str('NSU').rjust(1,'0')
-            #formatted_line += str(self.localidadPartner(apunte.partner_id)).ljust(20,' ')
-            #formatted_line += str(self.domicilioPartner(apunte.partner_id)).ljust(60, ' ')
-            #formatted_line += str(self.codigoPostalPartner(apunte.partner_id)).ljust(10, ' ')
-            #formatted_line += str(apunte.date.strftime('%Y%m%d')).ljust(8,' ')
-            formatted_lines.append(formatted_line)
-            
+            reconcile_id = False
+            for line in comprobante.matched_move_line_ids:
+                if line.full_reconcile_id:
+                    reconcile_id = line.full_reconcile_id
+            if reconcile_id:
+                facturas = self.record.env['account.move.line'].search([
+                        ('full_reconcile_id', '=', line.full_reconcile_id.id),('credit', '>', 0)])
+                for factura in facturas:
+                    comprobante_factura = self.obtenerComprobante(factura,2)
+                    tipo_operacion = self.tipoOperacion(factura)
+                    formatted_line = str(self.extract_last_four_digits(self.buscarNroCertificado(comprobante_factura,56,2))).ljust(6,' ')
+                    formatted_line += str(factura.date.strftime('%Y')).ljust(4,' ')
+                    formatted_line += str(self.tipoComprobanteOrigen(2,factura)).rjust(2,' ')
+                    formatted_line += str('NSUF').rjust(4,'0')
+                    formatted_line += str(comprobante_factura.sequence_number).rjust(8,' ')
+                    formatted_line += str(comprobante_factura.date.strftime('%Y%m%d')).rjust(8,'0')           #Fecha de comprobante
+                    formatted_line += '{:.2f}'.format(self.montoComprobante(comprobante_factura,2)).replace('.', '').rjust(12,'0')
+                    formatted_line += str('NSU').rjust(3,'0')
+                    formatted_line += str(comprobante_factura.date.strftime('%Y%m')).rjust(6,'0')
+                    formatted_line += str('NSU').rjust(1,'0')
+                    formatted_lines.append(formatted_line)
         return "\n".join(formatted_lines)
     def format_jujuy_perc(self, record):
         formatted_lines = []
@@ -622,8 +626,7 @@ class DDJJExport:
         for line in comprobante.matched_move_line_ids:
                     if line.full_reconcile_id:
                         related_movements = self.record.env['account.move.line'].search(
-                        [('full_reconcile_id', '=', line.full_reconcile_id.id)], limit=1
-                        )
+                        [('full_reconcile_id', '=', line.full_reconcile_id.id)])
                         if related_movements:
                             invoice = self.record.env['account.move'].search(
                             [('id', '=', related_movements.move_id.id), ('move_type', 'in', ('out_invoice', 'in_invoice'))],
