@@ -637,11 +637,11 @@ class DDJJExport:
                         return 0
         return 0
             
-    def extract_number(sequence_prefix):
+    def extract_number(self,sequence_prefix):
         # Usamos una expresión regular para encontrar el número en la cadena
         return sequence_prefix[6:8]
     
-    def extract_last_four_digits(input_string):
+    def extract_last_four_digits(self,input_string):
         # Extraer los últimos 6 caracteres de la cadena
         last_six_digits = input_string[-6:]
         
