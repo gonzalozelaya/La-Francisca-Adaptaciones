@@ -195,10 +195,10 @@ class DDJJExport:
             formatted_line += str('   ')
             formatted_line += str(comprobante.sequence_number).rjust(8,'0')
             formatted_line += str(self.negativoJujuy(comprobante,tipo_operacion))
-            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,56,tipo_operacion)).replace('.','').rjust(12, ' ')
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,56,tipo_operacion)).replace('.','').ljust(12, ' ')
             formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,56,tipo_operacion)).replace('.','').rjust(4,'0') #Alicuota
             formatted_line += str(self.negativoJujuy(comprobante,tipo_operacion))
-            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,56,tipo_operacion)).replace('.','').rjust(10, ' ')
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,56,tipo_operacion)).replace('.','').ljust(10, ' ')
             formatted_line += str('  ')
             formatted_line += str('0').ljust(11,'0')
             formatted_lines.append(formatted_line)
