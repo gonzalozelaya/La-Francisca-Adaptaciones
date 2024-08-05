@@ -81,15 +81,6 @@ class AccountDDJJ(models.TransientModel):
         # Crear un buffer en memoria para el contenido del archivo
         output = StringIO()
         
-        # Escribir la cabecera del archivo (ajusta según sea necesario)
-        output.write("Nombre\tFecha Inicio\tFecha Fin\tMunicipalidad\tCódigo de Cuenta\tFactura\tPago\n")
-
-        for record in self:
-            for line in record.apunte_ids:
-                invoice = line.move_id.name if line.move_id else ''
-                payments = line.payment_id.name if line.payment_id else ''
-                output.write(f"{record.name}\t{record.date_start}\t{record.date_end}\t{record.municipalidad}\t{line.account_id.code}\t{invoice}\t{payments}\n")
-        
         # Obtener el contenido del archivo
         #file_content = output.getvalue()
         #utput.close()
