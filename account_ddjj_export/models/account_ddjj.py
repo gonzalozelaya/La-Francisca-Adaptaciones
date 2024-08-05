@@ -613,7 +613,7 @@ class DDJJExport:
         for line in comprobante.matched_move_line_ids:
                     if line.full_reconcile_id:
                         related_movements = self.record.env['account.move.line'].search(
-                        [('full_reconcile_id', '=', line.full_reconcile_id)])
+                        [('full_reconcile_id', '=', line.full_reconcile_id.id)])
                         for move_line in related_movements:
                             if move_line.move_id.move_type in ('out_invoice', 'in_invoice') or move_line.credit > 0:
                                 paid_invoices_count += 1
@@ -622,7 +622,7 @@ class DDJJExport:
         for line in comprobante.matched_move_line_ids:
                     if line.full_reconcile_id:
                         related_movements = self.record.env['account.move.line'].search(
-                        [('full_reconcile_id', '=', line.full_reconcile_id)], limit=1
+                        [('full_reconcile_id', '=', line.full_reconcile_id.id)], limit=1
                         )
                         if related_movements:
                             invoice = self.env['account.move'].search(
