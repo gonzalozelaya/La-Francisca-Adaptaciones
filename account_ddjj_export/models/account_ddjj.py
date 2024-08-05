@@ -143,7 +143,7 @@ class DDJJExport:
             #formatted_line += str(self.domicilioPartner(apunte.partner_id)).ljust(60, ' ')
             #formatted_line += str(self.codigoPostalPartner(apunte.partner_id)).ljust(10, ' ')
             #formatted_line += str(apunte.date.strftime('%Y%m%d')).ljust(8,' ')
-            formatted_line += str(self.extract_last_four_digits(self.buscarNroCertificado(comprobante,56,tipo_operacion))).ljust(6,' ')
+            formatted_line += str(self.extract_last_four_digits(self.buscarNroCertificado(comprobante,56,tipo_operacion))).rjust(6,' ')
             formatted_line += str(apunte.date.strftime('%Y')).ljust(4,' ')
             formatted_line += str(comprobante.date.strftime('%Y%m%d')).ljust(8,' ')
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,56,tipo_operacion)).replace('.','').rjust(12, ' ')
@@ -174,16 +174,16 @@ class DDJJExport:
                 for factura in facturas:
                     comprobante_factura = self.obtenerComprobante(factura,2)
                     tipo_operacion = self.tipoOperacion(factura)
-                    formatted_line = str(self.extract_last_four_digits(self.buscarNroCertificado(comprobante_factura,56,2))).ljust(6,' ')
+                    formatted_line = str(self.extract_last_four_digits(self.buscarNroCertificado(comprobante,56,1))).rjust(6,' ')
                     formatted_line += str(factura.date.strftime('%Y')).ljust(4,' ')
-                    formatted_line += str(self.tipoComprobanteOrigen(2,factura)).rjust(2,' ')
-                    formatted_line += str('NSUF').rjust(4,'0')
+                    formatted_line += '1' #Letra de factura(pendiente)
+                    formatted_line += str(self.nroSucursalProveedor(comprobante)).rjust(2,' ')
                     formatted_line += str(comprobante_factura.sequence_number).rjust(8,' ')
                     formatted_line += str(comprobante_factura.date.strftime('%Y%m%d')).rjust(8,'0')           #Fecha de comprobante
                     formatted_line += '{:.2f}'.format(self.montoComprobante(comprobante_factura,2)).replace('.', '').rjust(12,'0')
-                    formatted_line += str('NSU').rjust(3,'0')
+                    formatted_line += str(self.nroSucursalProveedor(comprobante)).rjust(3,' ')
                     formatted_line += str(comprobante_factura.date.strftime('%Y%m')).rjust(6,'0')
-                    formatted_line += str('NSU').rjust(1,'0')
+                    formatted_line += '0'
                     formatted_lines.append(formatted_line)
         return "\n".join(formatted_lines)
     def format_jujuy_perc(self, record):
@@ -653,7 +653,7 @@ class DDJJExport:
         last_six_digits = ''.join(filter(str.isdigit, last_six_digits))
         
         # Tomar solo los últimos 4 dígitos
-        last_four_digits = last_six_digits[-4:]
+        last_four_digits = last_six_digits[-3:]
         
         return last_four_digits
     
