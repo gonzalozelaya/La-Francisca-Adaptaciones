@@ -391,7 +391,7 @@ class DDJJExport:
             else:
                 if (self.record.municipalidad == 'jujuy'):
                     if comprobante.move_type == 'out_refund' or comprobante.move_type == 'in_refund':
-                        return -1 * (comprobante.amount_total)
+                        return '-'+str(comprobante.amount_total)
                     else:
                         return comprobante.amount_total
                 else:
