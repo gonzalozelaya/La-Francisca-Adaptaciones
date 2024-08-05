@@ -626,7 +626,7 @@ class DDJJExport:
         for line in comprobante.matched_move_line_ids:
                     if line.full_reconcile_id:
                         related_movements = self.record.env['account.move.line'].search(
-                        [('full_reconcile_id', '=', line.full_reconcile_id.id)])
+                        [('full_reconcile_id', '=', line.full_reconcile_id.id),('credit', '>', 0 )],limit=1)
                         if related_movements:
                             invoice = self.record.env['account.move'].search(
                             [('id', '=', related_movements.move_id.id), ('move_type', 'in', ('out_invoice', 'in_invoice'))],
