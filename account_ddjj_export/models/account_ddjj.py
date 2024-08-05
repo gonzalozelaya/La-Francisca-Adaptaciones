@@ -7,14 +7,7 @@ from datetime import datetime, date, timedelta
 class AccountDDJJ(models.TransientModel):
     _name = 'account.ddjj'
     _description = 'Modelo para DDJJ de cuentas'
-
-    def _get_default_month(self):
-        return str(datetime.now().month)
-
-    def _get_default_year(self):
-        return str(datetime.now().year)
     
-    name = fields.Char(string='Nombre', required=True)
     date_start = fields.Date(string='Fecha Inicio', required=True,default=lambda self: fields.Date.to_string(datetime(datetime.now().year, datetime.now().month, 1)))
     date_end = fields.Date(string='Fecha Fin', required=True, default=lambda self: fields.Date.today())
     

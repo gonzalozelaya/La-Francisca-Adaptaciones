@@ -39,3 +39,10 @@ apuntes_jujuy =  fields.Selection(string='Apuntes a exportar', selection=[
         string='Año',
         default=_get_default_year
     )
+    
+    
+    def _get_default_month(self):
+        return str(datetime.now().month)
+
+    def _get_default_year(self):
+        return str(datetime.now().year)
