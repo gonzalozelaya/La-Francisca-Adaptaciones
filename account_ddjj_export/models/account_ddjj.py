@@ -389,7 +389,13 @@ class DDJJExport:
                         suma_factura += line.credit
                 return suma_factura
             else:
-                return comprobante.amount_total
+                if (self.record.municipalidad == 'jujuy'):
+                    if comprobante.move_type == 'out_refund' or comprobante.move_type == 'in_refund':
+                        return -comprobante.amount_total
+                    else:
+                        return comprobante.amount_total
+                else:
+                    return comprobante.amount_total
     
     def tipoFactura(self,apunte,tipo_operacion):
         if tipo_operacion ==1:
@@ -413,7 +419,7 @@ class DDJJExport:
         if tipo_operacion == 1:
             return 0
         else:
-            comp = 1
+            comp = 0
             if comprobante.move_type == 'out_invoice' or comprobante.move_type == 'in_invoice':
                 comp = 1
             if comprobante.move_type == 'out_refund' or comprobante.move_type == 'in_refund':
