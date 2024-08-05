@@ -144,9 +144,9 @@ class DDJJExport:
             formatted_line += str('2272').ljust(6,' ')
             formatted_line += str(apunte.date.strftime('%Y')).ljust(4,' ')
             formatted_line += str(apunte.date.strftime('%Y%m%d')).ljust(4,' ')
-            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,54,tipo_operacion)).replace('.','').rjust(12, ' ')
-            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,54,tipo_operacion)).replace('.','').rjust(4,'0') #Alicuota
-            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,54,tipo_operacion)).replace('.','').rjust(10, ' ')
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,56,tipo_operacion)).replace('.','').rjust(12, ' ')
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,56,tipo_operacion)).replace('.','').rjust(4,'0') #Alicuota
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,56,tipo_operacion)).replace('.','').rjust(10, ' ')
             formatted_line += str('  ')
             formatted_line += str('0').ljust(11,'0')
             formatted_lines.append(formatted_line)
@@ -166,7 +166,7 @@ class DDJJExport:
             formatted_line += '{:.2f}'.format(self.montoComprobante(comprobante,tipo_operacion)).replace('.', '').rjust(12,'0')
             formatted_line = str('NSU').rjust(3,'0')
             formatted_line += str(comprobante.date.strftime('%Y%m')).rjust(6,'0')
-            formatted_line = str('NSU').rjust(1,'0')
+            formatted_line += str('NSU').rjust(1,'0')
             #formatted_line += str(self.localidadPartner(apunte.partner_id)).ljust(20,' ')
             #formatted_line += str(self.domicilioPartner(apunte.partner_id)).ljust(60, ' ')
             #formatted_line += str(self.codigoPostalPartner(apunte.partner_id)).ljust(10, ' ')
@@ -194,8 +194,10 @@ class DDJJExport:
             formatted_line += str('0032').ljust(4,'0')
             formatted_line += str('   ')
             formatted_line += str(comprobante.sequence_number).rjust(8,'0')
+            formatted_line += str(self.negativoJujuy(selg,tipo_operacion))
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,56,tipo_operacion)).replace('.','').rjust(12, ' ')
             formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,56,tipo_operacion)).replace('.','').rjust(4,'0') #Alicuota
+            formatted_line += str(self.negativoJujuy(selg,tipo_operacion))
             formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,56,tipo_operacion)).replace('.','').rjust(10, ' ')
             formatted_line += str('  ')
             formatted_line += str('0').ljust(11,'0')
@@ -551,11 +553,6 @@ class DDJJExport:
                     retenido = line.base_amount
             return retenido
         else:
-            if (self.record.municipalidad == 'jujuy'):
-                if comprobante.move_type == 'out_refund' or comprobante.move_type == 'in_refund':
-                    return -comprobante.amount_untaxed
-                else:
-                    return comprobante.amount_untaxed
             return comprobante.amount_untaxed
 
     def porcentajeAlicuota(self,comprobante,taxgroup,tipo_operacion):
@@ -597,12 +594,14 @@ class DDJJExport:
             if apunte.credit > 0:
                 return apunte.credit
             elif apunte.debit > 0:
-                if self.record.municipalidad == 'jujuy':
-                    return -apunte.debit
-                else: 
-                    return apunte.debit
-            
-            
+                return apunte.debit
+    
+    def negativoJujuy(self,comprobante,tipo_operacion):
+        if comprobante.move_type == 'out_refund' or comprobante.move_type == 'in_refund':
+            return '-'
+        else:
+            return ''
+    
     def download_zip(self,record, attachment_ids):
             # Obtener los archivos adjuntos
             attachments = record.env['ir.attachment'].sudo().browse(attachment_ids)
