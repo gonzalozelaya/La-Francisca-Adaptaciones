@@ -200,8 +200,8 @@ class DDJJExport:
             formatted_line += str('  ')
             formatted_line += str('0').ljust(11,'0')
             formatted_lines.append(formatted_line)
-            
-        return "\n".join(formatted_lines)
+        formatted_lines_reversed = list(reversed(formatted_lines))
+        return "\n".join(formatted_lines_reversed)
     #Pendiente
     def format_sicore(self, record):
         formatted_lines = []
@@ -330,7 +330,7 @@ class DDJJExport:
 
                 # Crear un adjunto en Odoo
                 attachment = self.record.env['ir.attachment'].create({
-                    'name': 'RetPer_AGIP.txt',
+                    'name': 'Percepciones_Jujuy.txt',
                     'type': 'binary',
                     'datas': file_content_base64,
                     'mimetype': 'text/plain',
@@ -391,7 +391,7 @@ class DDJJExport:
             else:
                 if (self.record.municipalidad == 'jujuy'):
                     if comprobante.move_type == 'out_refund' or comprobante.move_type == 'in_refund':
-                        return -comprobante.amount_total
+                        return -1 * (comprobante.amount_total)
                     else:
                         return comprobante.amount_total
                 else:
