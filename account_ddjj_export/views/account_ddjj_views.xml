@@ -11,12 +11,7 @@
           </header>
           <sheet>
             <group>
-              <field name="simple_mode"/>
-              <group invisible='simple_mode == True'>
-                  <field name="month"/>
-                  <field name="year"/>
-              </group>
-              <group invisible='simple_mode == False'>
+              <group>
                   <field name="date_start"/>
                   <field name="date_end"/>
               </group>

@@ -17,21 +17,9 @@ class AccountDDJJ(models.TransientModel):
     name = fields.Char(string='Nombre', required=True)
     date_start = fields.Date(string='Fecha Inicio', required=True,default=lambda self: fields.Date.to_string(datetime(datetime.now().year, datetime.now().month, 1)))
     date_end = fields.Date(string='Fecha Fin', required=True, default=lambda self: fields.Date.today())
-    month = fields.Selection(
-        selection=[
-            ('1', 'Enero'), ('2', 'Febrero'), ('3', 'Marzo'), ('4', 'Abril'),
-            ('5', 'Mayo'), ('6', 'Junio'), ('7', 'Julio'), ('8', 'Agosto'),
-            ('9', 'Septiembre'), ('10', 'Octubre'), ('11', 'Noviembre'), ('12', 'Diciembre')
-        ],
-        string='Mes',
-        default=_get_default_month
-    )
-    year = fields.Selection(
-        selection=[(str(year), str(year)) for year in range(datetime.now().year - 2, datetime.now().year + 1)],
-        string='Año',
-        default=_get_default_year
-    )
-    simple_mode = fields.Boolean(string='Fechas específicas')
+    
+    ignore_nc = fields.Boolean(string='Ignorar N/C',help='Marque esta casilla para ignorar las Notas de Crédito.')
+    
     municipalidad = fields.Selection(
         selection=[
             ('sicore', 'SICORE'),
@@ -40,7 +28,8 @@ class AccountDDJJ(models.TransientModel):
             ('tucuman', 'Tucumán')
         ],
         string='Municipalidad',
-        required=True
+        required=True,
+        default='caba'
     )
     apuntes_a_mostrar =  fields.Selection(string='Apuntes a exportar', selection=[
     ('1', 'Retenciones y Percepciones'),
@@ -57,19 +46,6 @@ class AccountDDJJ(models.TransientModel):
         string='Apuntes Contables',
         compute='_compute_apunte_ids',
         store=True,)
-    
-    @api.onchange('month', 'year', 'simple_mode')
-    def _onchange_month_year(self):
-        if self.simple_mode and self.month and self.year:
-            year = int(self.year)
-            month = int(self.month)
-            self.date_start = date(year, month, 1)
-            next_month = month % 12 + 1
-            next_month_year = year if month < 12 else year + 1
-            self.date_end = date(next_month_year, next_month, 1) - timedelta(days=1)
-        elif not self.simple_mode:
-            self.date_start = fields.Date.to_string(datetime(datetime.now().year, datetime.now().month, 1))
-            self.date_end = fields.Date.today()
     
     @api.depends('date_start','date_end','municipalidad','apuntes_a_mostrar')
     def _compute_apunte_ids(self):

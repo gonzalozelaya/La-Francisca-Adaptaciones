@@ -24,3 +24,18 @@ apuntes_jujuy =  fields.Selection(string='Apuntes a exportar', selection=[
         for rec in self:
             if 
         return
+    
+     month = fields.Selection(
+        selection=[
+            ('1', 'Enero'), ('2', 'Febrero'), ('3', 'Marzo'), ('4', 'Abril'),
+            ('5', 'Mayo'), ('6', 'Junio'), ('7', 'Julio'), ('8', 'Agosto'),
+            ('9', 'Septiembre'), ('10', 'Octubre'), ('11', 'Noviembre'), ('12', 'Diciembre')
+        ],
+        string='Mes',
+        default=_get_default_month
+    )
+    year = fields.Selection(
+        selection=[(str(year), str(year)) for year in range(datetime.now().year - 2, datetime.now().year + 1)],
+        string='Año',
+        default=_get_default_year
+    )
