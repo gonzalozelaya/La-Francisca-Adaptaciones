@@ -143,7 +143,7 @@ class DDJJExport:
             #formatted_line += str(self.domicilioPartner(apunte.partner_id)).ljust(60, ' ')
             #formatted_line += str(self.codigoPostalPartner(apunte.partner_id)).ljust(10, ' ')
             #formatted_line += str(apunte.date.strftime('%Y%m%d')).ljust(8,' ')
-            formatted_line += str(self.buscarNroCertificado(comprobante,56,tipo_operacion)).ljust(6,' ')
+            formatted_line += str(self.extract_last_four_digits(self.buscarNroCertificado(comprobante,56,tipo_operacion))).ljust(6,' ')
             formatted_line += str(apunte.date.strftime('%Y')).ljust(4,' ')
             formatted_line += str(comprobante.date.strftime('%Y%m%d')).ljust(8,' ')
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,56,tipo_operacion)).replace('.','').rjust(12, ' ')
@@ -611,7 +611,7 @@ class DDJJExport:
     def cantidadFacturas(self,comprobante):
         paid_invoices_count = 0
         for line in comprobante.matched_move_line_ids:
-                    if line.full_reconcile_id:
+                    if line.full_reconcile_id and paid_invoices_count == 0:
                         related_movements = self.record.env['account.move.line'].search(
                         [('full_reconcile_id', '=', line.full_reconcile_id.id)])
                         for move_line in related_movements:
@@ -639,12 +639,20 @@ class DDJJExport:
             
     def extract_number(sequence_prefix):
         # Usamos una expresión regular para encontrar el número en la cadena
-        match = re.search(r'\d+', sequence_prefix)
-        if match:
-            return match.group()
-        else:
-            return 0
+        return sequence_prefix[6:8]
+    
+    def extract_last_four_digits(input_string):
+        # Extraer los últimos 6 caracteres de la cadena
+        last_six_digits = input_string[-6:]
         
+        # Filtrar solo los dígitos de los últimos 6 caracteres
+        last_six_digits = ''.join(filter(str.isdigit, last_six_digits))
+        
+        # Tomar solo los últimos 4 dígitos
+        last_four_digits = last_six_digits[-4:]
+        
+        return last_four_digits
+    
     def download_zip(self,record, attachment_ids):
             # Obtener los archivos adjuntos
             attachments = record.env['ir.attachment'].sudo().browse(attachment_ids)
