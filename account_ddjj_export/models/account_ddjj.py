@@ -175,9 +175,9 @@ class DDJJExport:
                     comprobante_factura = self.obtenerComprobante(factura,2)
                     tipo_operacion = self.tipoOperacion(factura)
                     formatted_line = str(self.extract_last_four_digits(self.buscarNroCertificado(comprobante,56,1))).rjust(6,' ')
-                    formatted_line += str(factura.date.strftime('%Y')).ljust(4,' ')
-                    formatted_line += '1' #Letra de factura(pendiente)
-                    formatted_line += str(self.nroSucursalProveedor(comprobante)).rjust(2,' ')
+                    formatted_line += str(factura.date.strftime('%Y')).ljust(4,'')
+                    formatted_line +=' 1' #Letra de factura(pendiente)
+                    formatted_line += str(self.nroSucursalProveedor(comprobante)).rjust(4,' ')
                     formatted_line += str(comprobante_factura.sequence_number).rjust(8,' ')
                     formatted_line += str(comprobante_factura.date.strftime('%Y%m%d')).rjust(8,'0')           #Fecha de comprobante
                     formatted_line += '{:.2f}'.format(self.montoComprobante(comprobante_factura,2)).replace('.', '').rjust(12,'0')
@@ -660,7 +660,7 @@ class DDJJExport:
     def download_zip(self,record, attachment_ids):
             # Obtener los archivos adjuntos
             attachments = record.env['ir.attachment'].sudo().browse(attachment_ids)
-
+            name = 'DDJJ_Tucuman'
             # Crear un buffer en memoria para el archivo ZIP
             buffer = io.BytesIO()
             with zipfile.ZipFile(buffer, 'w') as zip_file:
@@ -674,9 +674,11 @@ class DDJJExport:
 
             zip_content_base64 = base64.b64encode(zip_content).decode('utf-8')
 
+            if self.record.municipalidad == 'jujuy':
+                name = 'DDJJ_Jujuy'
             # Crear un archivo adjunto en Odoo
             attachment = self.record.env['ir.attachment'].create({
-                'name': 'DDJJ_Tucuman.zip',
+                'name': name,
                 'type': 'binary',
                 'datas': zip_content_base64,
                 'mimetype': 'application/zip',
