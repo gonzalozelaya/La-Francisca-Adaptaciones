@@ -27,5 +27,6 @@
     'data': [
         'security/ir.model.access.csv',
         'views/account_ddjj_views.xml',
+        'views/account_ddjj_settings.xml',
     ],
 }
