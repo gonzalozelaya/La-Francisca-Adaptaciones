@@ -198,7 +198,6 @@ class DDJJExport:
             formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,56,tipo_operacion)).replace('.','').rjust(4,'0') #Alicuota
             formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,56,tipo_operacion)).replace('.','').rjust(10, ' ')
             formatted_line += str('    ')
-            formatted_line += str(self.negativoJujuy(comprobante))
             formatted_line += str('0').ljust(11,'0')
             formatted_lines.append(formatted_line)
         formatted_lines_reversed = list(reversed(formatted_lines))
