@@ -4,6 +4,8 @@ from io import StringIO
 import io
 import zipfile
 from datetime import datetime, date, timedelta
+import re
+
 class AccountDDJJ(models.TransientModel):
     _name = 'account.ddjj'
     _description = 'Modelo para DDJJ de cuentas'
@@ -141,18 +143,23 @@ class DDJJExport:
             #formatted_line += str(self.domicilioPartner(apunte.partner_id)).ljust(60, ' ')
             #formatted_line += str(self.codigoPostalPartner(apunte.partner_id)).ljust(10, ' ')
             #formatted_line += str(apunte.date.strftime('%Y%m%d')).ljust(8,' ')
-            formatted_line += str('2272').ljust(6,' ')
+            formatted_line += str(self.buscarNroCertificado(comprobante,56,tipo_operacion)).ljust(6,' ')
             formatted_line += str(apunte.date.strftime('%Y')).ljust(4,' ')
-            formatted_line += str(apunte.date.strftime('%Y%m%d')).ljust(4,' ')
+            formatted_line += str(comprobante.date.strftime('%Y%m%d')).ljust(8,' ')
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,56,tipo_operacion)).replace('.','').rjust(12, ' ')
-            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,56,tipo_operacion)).replace('.','').rjust(4,'0') #Alicuota
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,56,tipo_operacion)).replace('.','').rjust(4,' ') #Alicuota
             formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,56,tipo_operacion)).replace('.','').rjust(10, ' ')
-            formatted_line += str('  ')
-            formatted_line += str('0').ljust(11,'0')
+            formatted_line += str('0')
+            formatted_line += str(self.cantidadFacturas(comprobante)).rjust(4,' ')
+            formatted_line += str(self.nroSucursalProveedor(comprobante)).rjust(2,' ')
+            formatted_line += str(self.nroIb(apunte.partner_id)).rjust(11,' ')
+            formatted_line += str('0')
+            formatted_line += str(apunte.date.strftime('%Y%m')).ljust(6,' ')
+            formatted_line += str('0')
             formatted_lines.append(formatted_line)
-            
         return "\n".join(formatted_lines)
-    def format_jujuy_ret_enc(self, record):
+    
+    def format_jujuy_ret_detalle(self, record):
         formatted_lines = []
         for apunte in record.apunte_ids:
             tipo_operacion = self.tipoOperacion(apunte)
@@ -343,7 +350,7 @@ class DDJJExport:
                 }
             else:
                 txt_content = self.format_jujuy_ret_dat(self.record)
-                datos_content = self.format_jujuy_ret_enc(self.record)
+                datos_content = self.format_jujuy_ret_detalle(self.record)
                 # Codificar el contenido en base64
                 txt_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
                 datos_content_base64 = base64.b64encode(datos_content.encode('utf-8')).decode('utf-8')
@@ -601,13 +608,43 @@ class DDJJExport:
                     return -apunte.debit
                 else: 
                     return apunte.debit
-    
-    def negativoJujuy(self,comprobante):
-        if comprobante.move_type == 'out_refund' or comprobante.move_type == 'in_refund':
-            return '  '
-        else:
-            return ''
+    def cantidadFacturas(self,comprobante):
+        paid_invoices_count = 0
+        for line in comprobante.matched_move_line_ids:
+                    if line.full_reconcile_id:
+                        related_movements = self.record.env['account.move.line'].search(
+                        [('full_reconcile_id', '=', line.full_reconcile_id)])
+                        for move_line in related_movements:
+                            if move_line.move_id.move_type in ('out_invoice', 'in_invoice') or move_line.credit > 0:
+                                paid_invoices_count += 1
+        return paid_invoices_count
+    def nroSucursalProveedor(self,comprobante):
+        for line in comprobante.matched_move_line_ids:
+                    if line.full_reconcile_id:
+                        related_movements = self.record.env['account.move.line'].search(
+                        [('full_reconcile_id', '=', line.full_reconcile_id)], limit=1
+                        )
+                        if related_movements:
+                            invoice = self.env['account.move'].search(
+                            [('id', '=', related_movements.move_id.id), ('move_type', 'in', ('out_invoice', 'in_invoice'))],
+                            limit=1
+                            )
+                            if invoice:
+                                return self.extract_number(invoice.sequence_prefix)
+                            else:
+                                return 0
+                    else:
+                        return 0
+        return 0
             
+    def extract_number(sequence_prefix):
+        # Usamos una expresión regular para encontrar el número en la cadena
+        match = re.search(r'\d+', sequence_prefix)
+        if match:
+            return match.group()
+        else:
+            return 0
+        
     def download_zip(self,record, attachment_ids):
             # Obtener los archivos adjuntos
             attachments = record.env['ir.attachment'].sudo().browse(attachment_ids)
