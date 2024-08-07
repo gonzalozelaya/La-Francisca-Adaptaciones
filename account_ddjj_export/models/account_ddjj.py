@@ -1,12 +1,121 @@
 from odoo import models, fields, api, Command, _
 import base64
-from io import StringIO
+from io import StringIO,BytesIO
 import io
 import zipfile
 from datetime import datetime, date, timedelta
 import re
+import unicodedata
+import xlsxwriter
 
 class AccountDDJJ(models.TransientModel):
+
+    tax_group_id_ret_agip = fields.Many2one(
+        'account.tax.group', 
+        string='Grupo Retenciones AGIP',
+        help="Grupo de impuestos de la retención AGIP"
+    )
+    
+    account_id_ret_agip = fields.Many2one(
+        'account.account', 
+        string='Plan de Cuentas Retenciones AGIP',
+        help="Plan de cuentas de la retención AGIP"
+    )
+    
+    tax_group_id_perc_agip = fields.Many2one(
+        'account.tax.group', 
+        string='Grupo Percepciones AGIP',
+        help="Grupo de impuestos de la percepción AGIP"
+    )
+    
+    account_id_perc_agip = fields.Many2one(
+        'account.account', 
+        string='Plan de Cuentas Percepciones AGIP',
+        help="Plan de cuentas de la percepción AGIP"
+    )
+    tax_group_id_ret_jujuy = fields.Many2one(
+        'account.tax.group', 
+        string='Grupo Retenciones AGIP',
+        help="Grupo de impuestos de la retención AGIP"
+    )
+    
+    account_id_ret_jujuy = fields.Many2one(
+        'account.account', 
+        string='Plan de Cuentas Retenciones AGIP',
+        help="Plan de cuentas de la retención AGIP"
+    )
+    
+    tax_group_id_perc_jujuy = fields.Many2one(
+        'account.tax.group', 
+        string='Grupo Percepciones AGIP',
+        help="Grupo de impuestos de la percepción AGIP"
+    )
+    
+    account_id_perc_jujuy = fields.Many2one(
+        'account.account', 
+        string='Plan de Cuentas Percepciones AGIP',
+        help="Plan de cuentas de la percepción AGIP"
+    )
+    tax_group_id_ret_tucuman = fields.Many2one(
+        'account.tax.group', 
+        string='Grupo Retenciones AGIP',
+        help="Grupo de impuestos de la retención AGIP"
+    )
+    
+    account_id_ret_tucuman = fields.Many2one(
+        'account.account', 
+        string='Plan de Cuentas Retenciones AGIP',
+        help="Plan de cuentas de la retención AGIP"
+    )
+    
+    tax_group_id_perc_tucuman = fields.Many2one(
+        'account.tax.group', 
+        string='Grupo Percepciones AGIP',
+        help="Grupo de impuestos de la percepción AGIP"
+    )
+    
+    account_id_perc_tucuman = fields.Many2one(
+        'account.account', 
+        string='Plan de Cuentas Percepciones AGIP',
+        help="Plan de cuentas de la percepción AGIP"
+    )
+    tax_group_id_ret_sicore = fields.Many2one(
+        'account.tax.group', 
+        string='Grupo Retenciones AGIP',
+        help="Grupo de impuestos de la retención AGIP"
+    )
+    
+    account_id_ret_sicore = fields.Many2one(
+        'account.account', 
+        string='Plan de Cuentas Retenciones AGIP',
+        help="Plan de cuentas de la retención AGIP"
+    )
+
+    @api.model
+    def default_get(self, fields):
+        res = super(AccountDDJJ, self).default_get(fields)
+        ICP = self.env['ir.config_parameter'].sudo()
+        
+        res.update({
+            'tax_group_id_ret_agip': int(ICP.get_param('account_ddjj_settings.tax_group_id_ret_agip', default=0)),
+            'account_id_ret_agip': int(ICP.get_param('account_ddjj_settings.account_id_ret_agip', default=0)),
+            'tax_group_id_perc_agip': int(ICP.get_param('account_ddjj_settings.tax_group_id_perc_agip', default=0)),
+            'account_id_perc_agip': int(ICP.get_param('account_ddjj_settings.account_id_perc_agip', default=0)),
+            'tax_group_id_ret_jujuy': int(ICP.get_param('account_ddjj_settings.tax_group_id_ret_jujuy', default=0)),
+            'account_id_ret_jujuy': int(ICP.get_param('account_ddjj_settings.account_id_ret_jujuy', default=0)),
+            'tax_group_id_perc_jujuy': int(ICP.get_param('account_ddjj_settings.tax_group_id_perc_jujuy', default=0)),
+            'account_id_perc_jujuy': int(ICP.get_param('account_ddjj_settings.account_id_perc_jujuy', default=0)),
+            'tax_group_id_ret_tucuman': int(ICP.get_param('account_ddjj_settings.tax_group_id_ret_tucuman', default=0)),
+            'account_id_ret_tucuman': int(ICP.get_param('account_ddjj_settings.account_id_ret_tucuman', default=0)),
+            'tax_group_id_perc_tucuman': int(ICP.get_param('account_ddjj_settings.tax_group_id_perc_tucuman', default=0)),
+            'account_id_perc_tucuman': int(ICP.get_param('account_ddjj_settings.account_id_perc_tucuman', default=0)),
+            'tax_group_id_ret_sicore': int(ICP.get_param('account_ddjj_settings.tax_group_id_ret_sicore', default=0)),
+            'account_id_ret_sicore': int(ICP.get_param('account_ddjj_settings.account_id_ret_sicore', default=0)),
+        })
+        
+        return res
+    
+    
     _name = 'account.ddjj'
     _description = 'Modelo para DDJJ de cuentas'
     
@@ -17,6 +126,7 @@ class AccountDDJJ(models.TransientModel):
     
     municipalidad = fields.Selection(
         selection=[
+            ('todo', 'Todas las ventas'),
             ('sicore', 'SICORE'),
             ('caba', 'AGIP (Caba)'),
             ('jujuy', 'Jujuy'),
@@ -42,18 +152,18 @@ class AccountDDJJ(models.TransientModel):
         compute='_compute_apunte_ids',
         store=True,)
     
-    @api.depends('date_start','date_end','municipalidad','apuntes_a_mostrar')
+    @api.depends('date_start','date_end','municipalidad','apuntes_a_mostrar','ignore_nc')
     def _compute_apunte_ids(self):
         for rec in self:
             account_code = []
             if self.municipalidad == 'sicore':
-                account_code =['2.1.3.04.020']
+                account_code =[self.account_id_ret_sicore.code]
             if self.municipalidad == 'jujuy':
-                account_code = ['2.1.3.02.150','2.1.3.02.160']
+                account_code = [self.account_id_ret_jujuy.code,self.account_id_perc_jujuy.code]
             elif self.municipalidad == 'caba':
-                account_code = ['2.1.3.02.030','2.1.3.02.040']
+                account_code = [self.account_id_ret_agip.code,self.account_id_perc_agip.code]
             elif self.municipalidad == 'tucuman':
-                account_code = ['2.1.3.02.310','2.1.3.02.320']
+                account_code = [self.account_id_ret_tucuman.code,self.account_id_perc_tucuman.code]
             
             if account_code:               
                 domain = [
@@ -63,7 +173,7 @@ class AccountDDJJ(models.TransientModel):
                 ('date', '<=', rec.date_end)
                 ]
                 
-                if rec.apuntes_a_mostrar == '1':
+                if rec.ignore_nc:
                     domain.append(('move_id.move_type', '!=', 'out_refund'))
                 elif rec.apuntes_a_mostrar == '2':
                     domain.append(('tax_line_id.type_tax_use', '=', 'none'))
@@ -90,8 +200,10 @@ class AccountDDJJ(models.TransientModel):
         exporter = DDJJExport(self)
         return exporter.exportToTxt()
 
-        
-        
+    
+    def generate_excel(self):
+        exporter = DDJJExport(self)
+        return exporter.generate_excel_report()
         
 class DDJJExport:
     def __init__(self, record):
@@ -119,11 +231,11 @@ class DDJJExport:
             formatted_line += str(self.situacionIva(apunte.partner_id))        #Situacion IVA
             formatted_line += (str(self.razonSocial(apunte.partner_id))[:30] if len(str(self.razonSocial(apunte.partner_id))) > 30 else str(self.razonSocial(apunte.partner_id))).ljust(30, ' ') #Razon social
             formatted_line += '{:.2f}'.format(self.importeOtrosConceptos(apunte,tipo_operacion,comprobante,53)).replace('.', ',').rjust(16,'0') #Importe otros conceptos 
-            formatted_line += '{:.2f}'.format(self.ImporteIva(apunte,comprobante,tipo_operacion,53)).replace('.', ',').rjust(16,'0') #Importe IVA 
-            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0') #Monto sujeto a retención (Neto) 
-            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,53,tipo_operacion)).replace('.', ',').rjust(5, '0') #Alicuota
-            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0')
-            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,53,tipo_operacion)).replace('.', ',').rjust(16, '0')
+            formatted_line += '{:.2f}'.format(self.ImporteIva(apunte,comprobante,tipo_operacion,self.record.tax_group_id_ret_agip)).replace('.', ',').rjust(16,'0') #Importe IVA 
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,self.record.tax_group_id_ret_agip,tipo_operacion)).replace('.', ',').rjust(16, '0') #Monto sujeto a retención (Neto) 
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,self.record.tax_group_id_ret_agip,self.record.tax_group_id_perc_agip,tipo_operacion)).replace('.', ',').rjust(5, '0') #Alicuota
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,self.record.tax_group_id_ret_agip,tipo_operacion)).replace('.', ',').rjust(16, '0')
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,self.record.tax_group_id_ret_agip,tipo_operacion)).replace('.', ',').rjust(16, '0')
              
             formatted_lines.append(formatted_line)
             formatted_lines_reversed = list(reversed(formatted_lines))
@@ -143,12 +255,12 @@ class DDJJExport:
             #formatted_line += str(self.domicilioPartner(apunte.partner_id)).ljust(60, ' ')
             #formatted_line += str(self.codigoPostalPartner(apunte.partner_id)).ljust(10, ' ')
             #formatted_line += str(apunte.date.strftime('%Y%m%d')).ljust(8,' ')
-            formatted_line += str(self.extract_last_four_digits(self.buscarNroCertificado(comprobante,56,tipo_operacion))).rjust(6,' ')
+            formatted_line += str(self.extract_last_four_digits(self.buscarNroCertificado(comprobante,self.record.tax_group_id_ret_jujuy,tipo_operacion))).rjust(6,' ')
             formatted_line += str(apunte.date.strftime('%Y')).ljust(4,' ')
             formatted_line += str(comprobante.date.strftime('%Y%m%d')).ljust(8,' ')
-            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,56,tipo_operacion)).replace('.','').rjust(12, ' ')
-            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,56,tipo_operacion)).replace('.','').rjust(4,' ') #Alicuota
-            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,56,tipo_operacion)).replace('.','').rjust(10, ' ')
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,self.record.tax_group_id_ret_jujuy,tipo_operacion)).replace('.','').rjust(12, ' ')
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,self.record.tax_group_id_ret_jujuy,self.record.tax_group_id_perc_jujuy,tipo_operacion)).replace('.','').rjust(4,' ') #Alicuota
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,self.record.tax_group_id_ret_jujuy,tipo_operacion)).replace('.','').rjust(10, ' ')
             formatted_line += str('0')
             formatted_line += str(self.cantidadFacturas(comprobante)).rjust(4,' ')
             formatted_line += str(self.nroSucursalProveedor(comprobante)).rjust(2,' ')
@@ -206,9 +318,9 @@ class DDJJExport:
             formatted_line += str('0060').ljust(4,'0')
             formatted_line += str('   ')
             formatted_line += str(comprobante.sequence_number).rjust(8,'0')
-            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,56,tipo_operacion)).replace('.','').rjust(12, ' ')
-            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,56,tipo_operacion)).replace('.','').rjust(4,'0') #Alicuota
-            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,56,tipo_operacion)).replace('.','').rjust(10, ' ')
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,self.record.tax_group_id_ret_jujuy,tipo_operacion)).replace('.','').rjust(12, ' ')
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,self.record.tax_group_id_ret_jujuy,self.record.tax_group_id_perc_jujuy,tipo_operacion)).replace('.','').rjust(4,'0') #Alicuota
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,self.record.tax_group_id_ret_jujuy,tipo_operacion)).replace('.','').rjust(10, ' ')
             formatted_line += str('    ')
             formatted_line += str('0').ljust(11,'0')
             formatted_lines.append(formatted_line)
@@ -227,10 +339,10 @@ class DDJJExport:
             formatted_line += ' 217'
             formatted_line += str(self.regimenGanancia(comprobante)).rjust(3,' ')
             formatted_line += '1'
-            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,52,tipo_operacion)).replace('.', ',').rjust(14, '0')
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,self.record.tax_group_id_ret_sicore,tipo_operacion)).replace('.', ',').rjust(14, '0')
             formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).rjust(10,'0')
             formatted_line += '01 '
-            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,52,tipo_operacion)).replace('.', ',').rjust(14, '0')
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,self.record.tax_group_id_ret_sicore,tipo_operacion)).replace('.', ',').rjust(14, '0')
             formatted_line += '000,00'
             formatted_line += str(' ').rjust(10,' ')
             formatted_line += str(self.tipodeIdentificacionSicore(apunte.partner_id)).rjust(2,'0')
@@ -252,10 +364,10 @@ class DDJJExport:
             formatted_line += (str(self.razonSocial(apunte.partner_id))[:40] if len(str(self.razonSocial(apunte.partner_id))) > 40 else str(self.razonSocial(apunte.partner_id))).ljust(40,' ')
             formatted_line += (str(self.domicilioPartner(apunte.partner_id))[:40] if len(str(self.domicilioPartner(apunte.partner_id))) > 40 else str(self.domicilioPartner(apunte.partner_id))).ljust(40,' ')
             formatted_line += str(00000).ljust(5,'0')
-            formatted_line += (str(self.localidadPartner(apunte.partner_id))[:15] if len(str(self.localidadPartner(apunte.partner_id))) > 15 else str(self.localidadPartner(apunte.partner_id))).ljust(15,' ')
-            formatted_line += (str(self.provinciaPartner(apunte.partner_id))[:15] if len(str(self.provinciaPartner(apunte.partner_id))) > 15 else str(self.provinciaPartner(apunte.partner_id))).ljust(15,' ')
-            formatted_line += str('').ljust(15,' ')
-            formatted_line += (str(self.codigoPostalPartner(apunte.partner_id))[:8] if len(str(self.codigoPostalPartner(apunte.partner_id))) > 8 else str(self.codigoPostalPartner(apunte.partner_id))).ljust(8,' ')
+            formatted_line += (str(self.localidadPartner(apunte.partner_id))[:15] if len(str(self.localidadPartner(apunte.partner_id))) > 15 else str(self.eliminar_tildes(self.localidadPartner(apunte.partner_id)))).ljust(15,' ')
+            formatted_line += (str(self.provinciaPartner(apunte.partner_id))[:15] if len(str(self.provinciaPartner(apunte.partner_id))) > 15 else str(self.eliminar_tildes(self.provinciaPartner(apunte.partner_id)))).ljust(15,' ')
+            formatted_line += str('').ljust(11,' ')
+            formatted_line += (str(self.codigoPostalPartner(apunte.partner_id))[:8] if len(str(self.codigoPostalPartner(apunte.partner_id))) > 8 else str(self.codigoPostalPartner(apunte.partner_id))).rjust(8,' ')
 
             formatted_lines.append(formatted_line)
         return "\n".join(formatted_lines)
@@ -270,20 +382,53 @@ class DDJJExport:
             formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).rjust(11,'0')
             formatted_line += str(self.tipoComprobanteTucuman(comprobante,tipo_operacion)).rjust(1)
             formatted_line += str(self.tipoFactura(apunte,tipo_operacion)).rjust(2,'0')
-            formatted_line += str(1).rjust(4,'0')  
+            formatted_line += str(60).rjust(4,'0')  
             formatted_line += str(comprobante.sequence_number).rjust(8,'0')
-            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,55,tipo_operacion)).rjust(15, '0')
-            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,55,tipo_operacion)).rjust(6, '0') #Alicuota
-            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,55,tipo_operacion)).rjust(15, '0')
-            
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,self.record.tax_group_id_ret_tucuman,tipo_operacion)).rjust(15, '0')
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,self.record.tax_group_id_ret_tucuman,self.record.tax_group_id_perc_tucuman,tipo_operacion)).rjust(6, '0') #Alicuota
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,self.record.tax_group_id_ret_tucuman,tipo_operacion)).rjust(15, '0')
             formatted_lines.append(formatted_line)
         return "\n".join(formatted_lines)
+     
+    def format_tucuman_nc(self, record):
+        formatted_lines = []
+        for apunte in record.apunte_ids:
+            tipo_operacion = self.tipoOperacion(apunte)
+            comprobante = self.obtenerComprobante(apunte,tipo_operacion)
+            if comprobante.move_type == 'out_refund' or comprobante.move_type == 'in_refund':
+                facturas = self.FacturasRelacionadas(comprobante)
+                for factura in facturas:
+                    formatted_line = str(60).rjust(4,'0')
+                    formatted_line += str(comprobante.sequence_number).rjust(8,'0')
+                    formatted_line += str(60).rjust(4,'0')
+                    formatted_line += str(factura.sequence_number).rjust(8,'0')
+                    formatted_line += str(self.tipoComprobanteTucuman(comprobante,tipo_operacion)).rjust(1)
+                    formatted_lines.append(formatted_line)
+        return "\n".join(formatted_lines)
+
+    def format_salta_excel(self,record):
+        formatted_lines = []
+        head = ['Fecha', 'Tipo', 'Comprobante','Razon','CUIT','Neto']
+        formatted_lines.append(head)
+        for apunte in record.apunte_ids:
+            tipo_operacion = self.tipoOperacion(apunte)
+            comprobante = self.obtenerComprobante(apunte,tipo_operacion)
+            line = []
+            line.append(str(comprobante.date.strftime('%Y%m%d')))
+            line.append(str(self.tipoFactura(apunte,tipo_operacion)))
+            line.append(str(comprobante.l10n_latam_document_number))
+            line.append(str(self.razonSocial(apunte.partner_id)))
+            line.append(str(self.nrodeIdentificacion(apunte.partner_id)))
+            line.append(str(self.montoSujetoARetencion(comprobante,self.record.tax_group_id_ret_tucuman,tipo_operacion)))
+            formatted_lines.append(line)
+        return formatted_lines
+    
     def exportToTxt(self):
         if self.record.municipalidad == 'caba':
             txt_content = self.format_line(self.record)
             # Codificar el contenido en base64
             file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
-
+            
             # Crear un adjunto en Odoo
             attachment = self.record.env['ir.attachment'].create({
                 'name': 'RetPer_AGIP.txt',
@@ -300,9 +445,11 @@ class DDJJExport:
         elif self.record.municipalidad == 'tucuman':
             txt_content = self.format_tucuman_datos(self.record)
             datos_content = self.format_tucuman_detalle(self.record)
+            nc_content = self.format_tucuman_nc(self.record)
             # Codificar el contenido en base64
             txt_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
             datos_content_base64 = base64.b64encode(datos_content.encode('utf-8')).decode('utf-8')
+            nc_content_base64 = base64.b64encode(nc_content.encode('utf-8')).decode('utf-8')
             # Crear un adjunto en Odoo
             attachment = self.record.env['ir.attachment'].create({
                 'name': 'RETPER.txt',
@@ -316,7 +463,16 @@ class DDJJExport:
                 'datas': datos_content_base64,
                 'mimetype': 'text/plain',
             })
-            return self.download_zip(self.record,[attachment.id,attachment2.id])
+            attachment3 = self.record.env['ir.attachment'].create({
+                'name': 'NCFACT.txt',
+                'type': 'binary',
+                'datas': nc_content_base64,
+                'mimetype': 'text/plain',
+            })
+            if self.record.apuntes_a_mostrar == '3':
+                return self.download_zip(self.record,[attachment.id,attachment2.id,attachment3.id])
+            else:
+                return self.download_zip(self.record,[attachment.id,attachment2.id])
         elif self.record.municipalidad == 'sicore':
             txt_content = self.format_sicore(self.record)
             # Codificar el contenido en base64
@@ -375,6 +531,40 @@ class DDJJExport:
                 return self.download_zip(self.record,[attachment.id,attachment2.id])
         else:
             return
+
+    def generate_excel_report(self):
+        output = BytesIO()
+        workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+        worksheet = workbook.add_worksheet()
+
+        dataExcel= self.format_salta_excel(self.record)
+        # Ejemplo de datos
+        # Escribir datos en el archivo Excel
+        row = 0
+        for line in dataExcel:
+            col = 0
+            for item in line:
+                worksheet.write(row, col, item)
+                col += 1
+            row += 1
+
+        workbook.close()
+        output.seek(0)
+        file_data = base64.b64encode(output.read())
+        output.close()
+
+        attachment = self.record.env['ir.attachment'].create({
+            'name': 'informe_ddjj.xlsx',
+            'type': 'binary',
+            'datas': file_data,
+            'mimetype': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        })
+
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/web/content/%s?download=true' % attachment.id,
+            'target': 'self',
+        }
     
     def obtenerComprobante(self,apunte,tipo_operacion):
         if tipo_operacion == 1:
@@ -408,7 +598,11 @@ class DDJJExport:
                         return comprobante.amount_total
                 else:
                     return comprobante.amount_total
-    
+
+
+    def TipoFacturaSalta(self,comprobante,tipo_operacion):
+        
+        return
     def tipoFactura(self,apunte,tipo_operacion):
         if tipo_operacion ==1:
             return ' '
@@ -417,7 +611,7 @@ class DDJJExport:
             return factura.l10n_latam_document_type_id.l10n_ar_letter
     def tipoComprobanteTucuman(self,comprobante,tipo_operacion):
         if tipo_operacion == 1:
-            return 98
+            return 99
         else:
             comp = 1
             if comprobante.move_type == 'out_invoice' or comprobante.move_type == 'in_invoice':
@@ -570,30 +764,21 @@ class DDJJExport:
                     return comprobante.amount_untaxed
             return comprobante.amount_untaxed
 
-    def porcentajeAlicuota(self,comprobante,taxgroup,tipo_operacion):
+    def porcentajeAlicuota(self,comprobante,taxgroup,taxgroup_perc,tipo_operacion):
         if tipo_operacion == 1:
             retenido = 0
             base = 0
             perc_group = 1
             for line in comprobante.l10n_ar_withholding_line_ids:
-                if line.tax_id.tax_group_id.id == taxgroup:
+                if line.tax_id.tax_group_id.id == taxgroup.id:
                     retenido = line.amount
                     base = line.base_amount
             return (retenido / base) * 100
         else:
             monto_alicuota = 0
-            perc_group = 1
-            if taxgroup == 53:
-                perc_group = 14
-            if taxgroup == 54:
-                perc_group = 20
-            if taxgroup == 55:
-                perc_group = 28
-            if taxgroup == 56:
-                perc_group = 20
             for line in comprobante.invoice_line_ids:
                 for tax in line.tax_ids:
-                    if tax.tax_group_id.id == perc_group:
+                    if tax.tax_group_id.id == taxgroup_perc.id:
                         monto_alicuota = tax.amount  
             return monto_alicuota
             #return (comprobante.amount_tax / comprobante.amount_untaxed) * 100 #28
@@ -640,6 +825,40 @@ class DDJJExport:
                     else:
                         return 0
         return 0
+
+    def FacturasRelacionadas(self,comprobante):
+        # Suponiendo que tienes el record de la nota de crédito
+        credit_note = self.record.env['account.move'].browse(comprobante.id)
+        
+        # Obtén las líneas de la nota de crédito
+        credit_note_lines = credit_note.line_ids
+        
+        # Encuentra las líneas reconciliadas parcialmente
+        partial_reconciles = credit_note_lines.mapped('matched_debit_ids') | credit_note_lines.mapped('matched_credit_ids')
+        
+        # Encuentra las líneas reconciliadas completamente
+        full_reconciles = credit_note_lines.mapped('full_reconcile_id')
+        
+        # Inicializa una lista para almacenar las facturas encontradas
+        invoices = self.record.env['account.move']
+        
+        for partial in partial_reconciles:
+            if partial.debit_move_id.move_id.move_type in ['out_invoice', 'in_invoice']:
+                invoices |= partial.debit_move_id.move_id
+            if partial.credit_move_id.move_id.move_type in ['out_invoice', 'in_invoice']:
+                invoices |= partial.credit_move_id.move_id
+        
+        # Recorre las reconciliaciones completas y añade las facturas asociadas a la lista
+        for full in full_reconciles:
+            for line in full.reconciled_line_ids:
+                if line.move_id.move_type in ['out_invoice', 'in_invoice']:
+                    invoices |= line.move_id
+
+        # Filtra las facturas para eliminar la propia nota de crédito de la lista
+        invoices = invoices.filtered(lambda inv: inv.id != credit_note.id)
+        
+        # Ahora la variable `invoices` contiene todas las facturas asociadas con la nota de crédito
+        return invoices
             
     def extract_number(self,sequence_prefix):
         # Usamos una expresión regular para encontrar el número en la cadena
@@ -656,6 +875,14 @@ class DDJJExport:
         last_four_digits = last_six_digits[-3:]
         
         return last_four_digits
+
+    def eliminar_tildes(self,texto):
+        # Normalizar el texto en forma NFC
+        texto_normalizado = unicodedata.normalize('NFD', texto)
+        # Filtrar los caracteres diacríticos
+        texto_sin_tildes = ''.join(c for c in texto_normalizado if unicodedata.category(c) != 'Mn')
+        # Normalizar el texto en forma NFC
+        return unicodedata.normalize('NFC', texto_sin_tildes)
     
     def download_zip(self,record, attachment_ids):
             # Obtener los archivos adjuntos

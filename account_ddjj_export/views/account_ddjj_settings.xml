@@ -12,12 +12,78 @@
                         <setting string="Grupo de Impuestos"
                                  help="Seleccione el grupo de impuestos"
                                  id="tax_group_setting">
-                            <field name="tax_group_id"/>
+                            <field name="tax_group_id_ret_agip"/>
                         </setting>
                         <setting string="Cuenta del Plan de Cuentas"
                                  help="Seleccione la cuenta del plan de cuentas"
                                  id="account_setting">
-                            <field name="account_id"/>
+                            <field name="account_id_ret_agip"/>
+                        </setting>
+                        <setting string="Grupo de Impuestos"
+                                 help="Seleccione el grupo de impuestos"
+                                 id="tax_group_setting">
+                            <field name="tax_group_id_perc_agip"/>
+                        </setting>
+                        <setting string="Cuenta del Plan de Cuentas"
+                                 help="Seleccione la cuenta del plan de cuentas"
+                                 id="account_setting">
+                            <field name="account_id_perc_agip"/>
+                        </setting>
+                    </block>
+                    <block title="Configuración de DDJJ de Jujuy" name="account_ddjj_block">
+                        <setting string="Grupo de Impuestos"
+                                 help="Seleccione el grupo de impuestos"
+                                 id="tax_group_setting">
+                            <field name="tax_group_id_ret_jujuy"/>
+                        </setting>
+                        <setting string="Cuenta del Plan de Cuentas"
+                                 help="Seleccione la cuenta del plan de cuentas"
+                                 id="account_setting">
+                            <field name="account_id_ret_jujuy"/>
+                        </setting>
+                        <setting string="Grupo de Impuestos"
+                                 help="Seleccione el grupo de impuestos"
+                                 id="tax_group_setting">
+                            <field name="tax_group_id_perc_jujuy"/>
+                        </setting>
+                        <setting string="Cuenta del Plan de Cuentas"
+                                 help="Seleccione la cuenta del plan de cuentas"
+                                 id="account_setting">
+                            <field name="account_id_perc_jujuy"/>
+                        </setting>
+                    </block>
+                    <block title="Configuración de DDJJ de Tucuman" name="account_ddjj_block">
+                        <setting string="Grupo de Impuestos"
+                                 help="Seleccione el grupo de impuestos"
+                                 id="tax_group_setting">
+                            <field name="tax_group_id_ret_tucuman"/>
+                        </setting>
+                        <setting string="Cuenta del Plan de Cuentas"
+                                 help="Seleccione la cuenta del plan de cuentas"
+                                 id="account_setting">
+                            <field name="account_id_ret_tucuman"/>
+                        </setting>
+                        <setting string="Grupo de Impuestos"
+                                 help="Seleccione el grupo de impuestos"
+                                 id="tax_group_setting">
+                            <field name="tax_group_id_perc_tucuman"/>
+                        </setting>
+                        <setting string="Cuenta del Plan de Cuentas"
+                                 help="Seleccione la cuenta del plan de cuentas"
+                                 id="account_setting">
+                            <field name="account_id_perc_tucuman"/>
+                        </setting>
+                    </block>
+                    <block title="Configuración de DDJJ de SICORE" name="account_ddjj_block">
+                        <setting string="Grupo de Impuestos"
+                                 help="Seleccione el grupo de impuestos"
+                                 id="tax_group_setting">
+                            <field name="tax_group_id_ret_sicore"/>
+                        </setting>
+                        <setting string="Cuenta del Plan de Cuentas"
+                                 help="Seleccione la cuenta del plan de cuentas"
+                                 id="account_setting">
+                            <field name="account_id_ret_sicore"/>
                         </setting>
                     </block>
                 </app>
@@ -25,18 +91,5 @@
         </field>
     </record>
 
-    <!-- Acción para abrir la vista de configuración -->
-    <record id="action_account_ddjj_settings" model="ir.actions.act_window">
-        <field name="name">Configuración de DDJJ de Cuentas</field>
-        <field name="res_model">account.ddjj.settings</field>
-        <field name="view_mode">form</field>
-        <field name="view_id" ref="res_config_settings_view_form"/>
-        <field name="target">new</field>
-    </record>
 
-    <!-- Menú para acceder a la configuración -->
-    <menuitem id="menu_account_ddjj_settings" 
-              name="Configuración de DDJJ de Cuentas"
-              parent="base.menu_configuration"
-              action="action_account_ddjj_settings"/>
 </odoo>

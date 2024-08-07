@@ -8,6 +8,7 @@
         <form string="Account DDJJ">
           <header>
             <button name="export_txt" type="object" string="Exportar TXT" class="btn-primary"/>
+            <button name="generate_excel" type="object" string="Exportar Excel" class="btn-secondary"/>
           </header>
           <sheet>
             <group>
@@ -18,6 +19,7 @@
               <group>
                 <field name="municipalidad"/>
                 <field name="apuntes_a_mostrar"/>
+                <field name="ignore_nc"/>
               </group>
               <field name="apunte_ids"/>
             </group>
