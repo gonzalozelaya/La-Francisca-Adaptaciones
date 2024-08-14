@@ -126,8 +126,8 @@ class AccountDDJJ(models.TransientModel):
     
     municipalidad = fields.Selection(
         selection=[
+            ('iva', 'Iva'),
             ('todo', 'Salta'),
-            ('iva', 'IVA'),
             ('sicore', 'SICORE'),
             ('caba', 'AGIP (Caba)'),
             ('jujuy', 'Jujuy'),
@@ -144,9 +144,7 @@ class AccountDDJJ(models.TransientModel):
         ('4', 'Notas de credito')
     ], default='1')
 
-    apuntes_a_mostrar_iva = fields.Selection(string ='Tipo',selection =[
-        ('1','Compras'),
-        ('2','Ventas')], default = '1')
+
     
     apunte_ids = fields.Many2many(
         comodel_name='account.move.line',
@@ -210,17 +208,6 @@ class AccountDDJJ(models.TransientModel):
                 moves = self.env['account.move'].search(domain)
                 rec.move_ids = [Command.clear(), Command.set(moves.ids)]
                 rec.apunte_ids = [Command.clear()]
-            elif rec.municipalidad == 'iva':
-                domain = [
-                    ('move_type', 'in', ['in_invoice', 'in_refund']),
-                    ('state', 'not in', ['draft', 'cancel']),
-                    ('date', '>=', rec.date_start),
-                    ('date', '<=', rec.date_end),
-                    ('l10n_latam_document_type_id', '!=', False)
-                ]
-                moves = self.env['account.move'].search(domain)
-                rec.move_ids = [Command.clear(), Command.set(moves.ids)]
-                rec.apunte_ids = [Command.clear()]
 
     def export_txt(self):
         # Crear un buffer en memoria para el contenido del archivo
@@ -241,115 +228,10 @@ class AccountDDJJ(models.TransientModel):
 class DDJJExport:
     def __init__(self, record):
         self.record = record
-
-    def format_iva_compras_cabecera(self,record):
-        formatted_lines = []
-        for apunte in record.move_ids:
-            tipo_operacion = 2
-            comprobante = apunte
-            format_line = str(comprobante.date.strftime('%Y%m%d')).rjust(8,'0')           #Fecha de comprobante
-            format_line += str(self.tipoDocumentoIVA(comprobante)).rjust(3,'0')
-            format_line += str(self.puntoDeVentaFactura(comprobante)).rjust(5,'0')
-            format_line += str(comprobante.sequence_number).rjust(20,'0')
-            format_line += str(' ').rjust(16,' ')
-            format_line +='80'
-            format_line += str(self.nrodeIdentificacion(comprobante.partner_id)).rjust(20,'0')
-            format_line += (str(self.razonSocial(comprobante.partner_id))[:30] if len(str(self.razonSocial(comprobante.partner_id))) > 30 else str(self.razonSocial(comprobante.partner_id))).ljust(30,' ')
-            format_line += '{:.2f}'.format(self.montoComprobante(comprobante,2)).replace('.', '').rjust(15, '0')
-            format_line += '{:.2f}'.format(self.IvaNoGravado(comprobante)).replace('.','').rjust(15,'0') #Conceptos que no integran el neto gravado - Pendiente
-            format_line += '{:.2f}'.format(00000).replace('.','').rjust(15,'0') #Operaciones exentas
-            format_line += '{:.2f}'.format(self.impuestoPercepcionesIVA(comprobante)).replace('.', '').rjust(15,'0')
-            format_line += '{:.2f}'.format(00000).replace('.','').rjust(15,'0') #Percepciones a otros impuestos nacionales
-            format_line += '{:.2f}'.format(self.IIBBIVA(comprobante)).replace('.', '').rjust(15,'0')
-            format_line += '{:.2f}'.format(self.impuestosMunicipales(comprobante)).replace('.', '').rjust(15,'0')
-            format_line += '{:.2f}'.format(self.impuestosInternos(comprobante)).replace('.', '').rjust(15,'0')
-            format_line +='PES'
-            format_line +='0001000000'
-            format_line += str(self.cantidadAlicuotasIVA(comprobante)).rjust(1,'0')
-            format_line += ' '
-            format_line += '{:.2f}'.format(self.creditoFiscalComputable(comprobante)).replace('.', '').rjust(15,'0')
-            format_line += '{:.2f}'.format(00000).replace('.','').rjust(15,'0') #Otros tributos
-            format_line += '{:.2f}'.format(00000).replace('.','').rjust(11,'0') #CUIT del emisor
-            format_line += str(' ').rjust(30,' ')
-            format_line += '{:.2f}'.format(00000).replace('.','').rjust(15,'0')
-            formatted_lines.append(format_line)
-        formatted_lines.append('')
-        return "\n".join(formatted_lines)
-
-    def format_iva_compras_alicuota_(self,record):
-        formatted_lines = []
-        for apunte in record.move_ids:
-            tipo_operacion = 2
-            comprobante = apunte
-            for line in apunte.line_ids:
-                if line.tax_group_id.l10n_ar_vat_afip_code:
-                    format_line = str(self.tipoDocumentoIVA(comprobante)).rjust(3,'0')
-                    format_line += str(self.puntoDeVentaFactura(comprobante)).rjust(5,'0')
-                    format_line += str(comprobante.sequence_number).rjust(20,'0')
-                    format_line +='80'
-                    format_line += str(self.nrodeIdentificacion(comprobante.partner_id)).rjust(20,'0')
-                    format_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,6,tipo_operacion)).replace('.','').rjust(15,'0')
-                    format_line += str(self.alicuotaDelIVA(line.tax_group_id)).rjust(4,'0')
-                    format_line += '{:.2f}'.format(line.debit).replace('.','').rjust(15,'0')
-                    formatted_lines.append(format_line)
-        formatted_lines.append('')
-        return "\r\n".join(formatted_lines)
-
-    def alicuotaDelIVA(self, impuesto):
-        return impuesto.l10n_ar_vat_afip_code
-
-    def tipoDocumentoIVA(self,comprobante):
-        return comprobante.l10n_latam_document_type_id.code
-    def puntoDeVentaFactura(self,comprobante):
-        return comprobante.l10n_latam_document_number[:5]
-    def impuestoPercepcionesIVA(self,comprobante):
-        sum = 0
-        for line in comprobante.line_ids:
-            if line.tax_group_id.l10n_ar_tribute_afip_code =='06':
-                sum += line.debit
-        return sum
-
-    def IvaNoGravado(self,comprobante):
-        sum = 0
-        for line in comprobante.line_ids:
-            if line.tax_group_id.id == 7:
-                sum += line.debit
-                sum += line.credit
-        return sum
-    def IIBBIVA(self, comprobante):
-        sum = 0
-        for line in comprobante.line_ids:
-            if line.tax_group_id.l10n_ar_tribute_afip_code == '07':
-                sum += line.debit
-        return sum
-    def impuestosInternos(self,comprobante):
-        sum = 0
-        for line in comprobante.line_ids:
-            if line.tax_group_id.l10n_ar_tribute_afip_code == '04':
-                sum += line.debit
-        return sum
-
-    def impuestosMunicipales(self,comprobante):
-        sum = 0
-        for line in comprobante.line_ids:
-            if line.tax_group_id.l10n_ar_tribute_afip_code == '08':
-                sum += line.debit
-        return sum
-    def cantidadAlicuotasIVA(self,comprobante):
-        sum=0
-        for line in comprobante.line_ids:
-            if line.tax_group_id.l10n_ar_vat_afip_code in ['3','4','5','6','7','8','9']:
-                sum += 1
-        return sum
-    def creditoFiscalComputable(self,comprobante):
-        sum=0
-        for line in comprobante.line_ids:
-            if line.tax_group_id.l10n_ar_vat_afip_code in ['3','4','5','6','7','8','9']:
-                sum += line.debit
-        return sum
-
+    
     def format_line(self, record):
         formatted_lines = []
+        
         for apunte in record.apunte_ids:
             tipo_operacion = self.tipoOperacion(apunte)
             comprobante = self.obtenerComprobante(apunte,tipo_operacion)
@@ -488,8 +370,10 @@ class DDJJExport:
             formatted_line += str(' ').rjust(9,' ')
             formatted_line += str('0').rjust(14,'0')
             formatted_line += str(' ').rjust(30,' ')
-            formatted_line += '00000000000000000000000 '
+            formatted_line += str('0').rjust(23,'0')
+            formatted_line += str(' ')
             formatted_lines.append(formatted_line)
+        formatted_lines.append('')
         return "\n".join(formatted_lines)
     
     #Pendiente
@@ -584,25 +468,6 @@ class DDJJExport:
         return reversed_data
     
     def exportToTxt(self):
-        if self.record.municipalidad == 'iva':
-            txt_content = self.format_iva_compras_cabecera(self.record)
-            detalle_content = self.format_iva_compras_alicuota_(self.record)
-            # Codificar el contenido en base64
-            file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
-            detalle_content_base64 = base64.b64encode(detalle_content.encode('utf-8')).decode('utf-8')
-            attachment = self.record.env['ir.attachment'].create({
-                'name': 'IVA_Compras_Cabecera.txt',
-                'type': 'binary',
-                'datas': file_content_base64,
-                'mimetype': 'text/plain',
-            })
-            attachment2 = self.record.env['ir.attachment'].create({
-                'name': 'IVA_Compras_Alicuota.txt',
-                'type': 'binary',
-                'datas': detalle_content_base64,
-                'mimetype': 'text/plain',
-            })
-            return self.download_zip(self.record,[attachment.id,attachment2.id])
         if self.record.municipalidad == 'caba':
             txt_content = self.format_line(self.record)
             # Codificar el contenido en base64
@@ -615,8 +480,12 @@ class DDJJExport:
                 'datas': file_content_base64,
                 'mimetype': 'text/plain',
             })
-            return self.download_zip(self.record,[attachment.id,attachment2.id])
             
+            return {
+                'type': 'ir.actions.act_url',
+                'url': '/web/content/%s?download=true' % attachment.id,
+                'target': 'self',
+            }
         elif self.record.municipalidad == 'tucuman':
             txt_content = self.format_tucuman_datos(self.record)
             datos_content = self.format_tucuman_detalle(self.record)
@@ -650,7 +519,6 @@ class DDJJExport:
                 return self.download_zip(self.record,[attachment.id,attachment2.id])
         elif self.record.municipalidad == 'sicore':
             txt_content = self.format_sicore(self.record)
-            txt_content = txt_content.replace('\n', '\r\n')
             # Codificar el contenido en base64
             file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
             # Crear un adjunto en Odoo
@@ -1118,8 +986,6 @@ class DDJJExport:
 
             if self.record.municipalidad == 'jujuy':
                 name = 'DDJJ_Jujuy'
-            if self.record.municipalidad == 'iva':
-                name = 'IVA_COMPRAS'
             # Crear un archivo adjunto en Odoo
             attachment = self.record.env['ir.attachment'].create({
                 'name': name,

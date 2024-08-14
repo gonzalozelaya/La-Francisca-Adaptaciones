@@ -77,7 +77,7 @@
                     <block title="Configuración de DDJJ de SICORE" name="account_ddjj_block">
                         <setting string="Grupo de Impuestos"
                                  help="Seleccione el grupo de impuestos"
-                                 id="tax_group_setting">
+                                 id="tax_group_setting_ret_sicore">
                             <field name="tax_group_id_ret_sicore"/>
                         </setting>
                         <setting string="Cuenta del Plan de Cuentas"

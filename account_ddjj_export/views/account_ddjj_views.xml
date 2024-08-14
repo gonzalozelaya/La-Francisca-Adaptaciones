@@ -7,7 +7,7 @@
       <field name="arch" type="xml">
         <form string="Account DDJJ">
           <header>
-            <button name="export_txt" type="object" string="Exportar TXT" class="btn-primary"/>
+            <button name="export_txt" type="object" string="Exportar Reporte" class="btn-primary" invisible="municipalidad == 'todo'"/>
             <button name="generate_excel" type="object" string="Exportar Excel" class="btn-secondary"/>
           </header>
           <sheet>
@@ -18,10 +18,25 @@
               </group>
               <group>
                 <field name="municipalidad"/>
-                <field name="apuntes_a_mostrar"/>
+                <field name="apuntes_a_mostrar" invisible="municipalidad == 'todo' or municipalidad == 'iva'"/>
+                <field name="apuntes_a_mostrar_iva" invisible="municipalidad != 'iva'"/>
                 <field name="ignore_nc"/>
               </group>
-              <field name="apunte_ids"/>
+              <!--<field name="apunte_ids"/>-->
+               <notebook>
+                    <!-- Pestaña para Apuntes Contables -->
+                    <page string="Apuntes Contables"
+                          invisible="municipalidad == 'todo' or municipalidad =='iva'">
+                        <field name="apunte_ids" widget="many2many">
+                        </field>
+                    </page>
+                    <!-- Pestaña para Facturas y Notas de Crédito -->
+                    <page string="Facturas y Notas de Crédito"
+                          invisible="municipalidad != 'todo' and municipalidad != 'iva'">
+                        <field name="move_ids" widget="many2many">
+                        </field>
+                    </page>
+                </notebook>
             </group>
           </sheet>
         </form>
