@@ -1,0 +1,72 @@
+<odoo>
+  <data>
+    <!-- Vista de formulario para el modelo account.ddjj -->
+    <record model="ir.ui.view" id="view_account_ddjj_form">
+      <field name="name">account.custom.report.aged.form</field>
+      <field name="model">account.custom.report.aged</field>
+      <field name="arch" type="xml">
+        <form string="Reportes cuentas por cobrar/pagar">
+          <header>
+            <button name="generate_excel" type="object" string="Exportar Excel" class="btn-primary"/>
+          </header>
+          <sheet>
+            <group>
+              <group>
+                  <field name="date_start"/>
+                  <field name="date_end"/>
+              </group>
+              <group>
+                <field name="municipalidad"/>
+                <field name="tipo" />
+                <field name="area" />
+                <field name="partner_id"/>
+              </group>
+              <!--<field name="apunte_ids"/>-->
+               <notebook>
+                    <!-- Pestaña para Apuntes Contables -->
+                    <page string="Apuntes Contables">
+                        <field name="apunte_ids" widget="many2many">
+                        </field>
+                    </page>
+                    <!-- Pestaña para Facturas y Notas de Crédito -->
+                    <page string="Facturas y Notas de Crédito"
+                          invisible="True">
+                        <field name="move_ids" widget="many2many">
+                        </field>
+                    </page>
+                </notebook>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <!-- Vista de lista para el modelo account.ddjj 
+    <record model="ir.ui.view" id="view_account_ddjj_tree">
+      <field name="name">account.ddjj.tree</field>
+      <field name="model">account.ddjj</field>
+      <field name="arch" type="xml">
+        <tree string="Account DDJJ">
+          <field name="name"/>
+          <field name="date_start"/>
+          <field name="date_end"/>
+          <field name="municipalidad"/>
+        </tree>
+      </field>
+    </record>-->
+
+    <!-- Acción para el modelo account.ddjj -->
+    <record model="ir.actions.act_window" id="action_accountcustom_report_aged">
+      <field name="name">Reporte personalizado</field>
+      <field name="res_model">account.custom.report.aged</field>
+      <field name="view_mode">form</field>
+      <field name="view_id" ref="view_account_custom_report_aged_form"/>
+      <field name="target">current</field>
+    </record>
+
+    <!-- Menú principal para el wizard -->
+    <menuitem id="menu_account_custom_report_aged_root" name="Reporte personalizado" sequence="10" />
+    <menuitem id="menu_account_custom_report_aged" name="Reporte personalizado"
+          parent="menu_account_custom_report_aged_root" action="action_accountcustom_report_aged"/>
+  </data>
+</odoo>
