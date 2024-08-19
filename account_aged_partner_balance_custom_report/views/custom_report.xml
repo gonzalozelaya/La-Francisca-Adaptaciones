@@ -1,5 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-  <data>
     <!-- Vista de formulario para el modelo account.ddjj -->
     <record model="ir.ui.view" id="view_account_ddjj_form">
       <field name="name">account.custom.report.aged.form</field>
@@ -12,12 +12,13 @@
           <sheet>
             <group>
               <group>
-                  <field name="date_start"/>
-                  <field name="date_end"/>
+                <field name="date_end"/>
+                <field name="balance"/>
+                <field name="ignore_saldo"/>
               </group>
               <group>
-                <field name="municipalidad"/>
-                <field name="tipo" />
+                <field name="type" />
+                <field name="fac_type"/>
                 <field name="area" />
                 <field name="partner_id"/>
               </group>
@@ -41,32 +42,12 @@
       </field>
     </record>
 
-    <!-- Vista de lista para el modelo account.ddjj 
-    <record model="ir.ui.view" id="view_account_ddjj_tree">
-      <field name="name">account.ddjj.tree</field>
-      <field name="model">account.ddjj</field>
-      <field name="arch" type="xml">
-        <tree string="Account DDJJ">
-          <field name="name"/>
-          <field name="date_start"/>
-          <field name="date_end"/>
-          <field name="municipalidad"/>
-        </tree>
-      </field>
-    </record>-->
-
-    <!-- Acción para el modelo account.ddjj -->
-    <record model="ir.actions.act_window" id="action_accountcustom_report_aged">
-      <field name="name">Reporte personalizado</field>
-      <field name="res_model">account.custom.report.aged</field>
-      <field name="view_mode">form</field>
-      <field name="view_id" ref="view_account_custom_report_aged_form"/>
-      <field name="target">current</field>
+    <!-- Acción para el modelo account.ddjj 
+    <record id="action_account_custom_report_aged" model="ir.actions.act_window" >
+        <field name="name">Reporte personalizado</field>
+        <field name="res_model">account.custom.report.aged</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_account_custom_report_aged_form"/>
     </record>
-
-    <!-- Menú principal para el wizard -->
-    <menuitem id="menu_account_custom_report_aged_root" name="Reporte personalizado" sequence="10" />
-    <menuitem id="menu_account_custom_report_aged" name="Reporte personalizado"
-          parent="menu_account_custom_report_aged_root" action="action_accountcustom_report_aged"/>
-  </data>
+-->
 </odoo>

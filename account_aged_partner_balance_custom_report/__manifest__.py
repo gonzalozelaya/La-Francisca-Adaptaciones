@@ -9,7 +9,7 @@
         Este módulo permite generar reportes personalizados de las cuentas por cobrar/pagar
     """,
 
-    'author': "AAAAAAA",
+    'author': "OutsourceArg",
     'website': "http://www.outsourcearg.com",
     'installable': True,
     # Categories can be used to filter modules in modules listing

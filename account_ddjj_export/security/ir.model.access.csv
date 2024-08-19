@@ -1,3 +1,3 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_custom_report_aged_user,access.account.custom.report.aged.user,model_account_custom_report_aged,base.group_user,1,1,1,1
-access_custom_report_aged_manager,access.account.custom.report.aged.manager,model_account_custom_report_aged,base.group_system,1,1,1,1
+access_account_ddjj_user,access.account.ddjj.user,model_account_ddjj,base.group_user,1,1,1,1
+access_account_ddjj_manager,access.account.ddjj.manager,model_account_ddjj,base.group_system,1,1,1,1

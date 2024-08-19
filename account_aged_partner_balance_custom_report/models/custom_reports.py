@@ -8,13 +8,12 @@ import re
 import unicodedata
 import xlsxwriter
 
-class AccountDDJJ(models.TransientModel):
+class AccountCustomReportAged(models.TransientModel):
     
     _name = 'account.custom.report.aged'
     _description = 'Modelo para DDJJ de cuentas'
     
-    date_start = fields.Date(string='Fecha Inicio', required=True,default=lambda self: fields.Date.to_string(datetime(datetime.now().year, datetime.now().month, 1)))
-    date_end = fields.Date(string='Fecha Fin', required=True, default=lambda self: fields.Date.today())
+    date_end = fields.Date(string='Al', required=True, default=lambda self: fields.Date.today())
     
     area = fields.Many2one(
         comodel_name='res.partner.category',  # Modelo relacionado
@@ -30,11 +29,19 @@ class AccountDDJJ(models.TransientModel):
         required=True,
         default='cobrar'
     )
+    fac_type = fields.Selection(
+        selection=[
+            ('x','Factura X'),
+            ('fac','Facturas'),
+            ('pagos','Pagos a favor del cliente'),
+        ],
+        string='Tipo de Comprobante',
+    )
     
     partner_id = fields.Many2one(
         comodel_name='res.partner',  # Modelo relacionado
         string='Contacto',        # Nombre del campo
-        help='Selecciona un contacto'
+        help='Selecciona un contacto',
     )
     
     apunte_ids = fields.Many2many(
@@ -50,25 +57,40 @@ class AccountDDJJ(models.TransientModel):
         relation='account_custom_report_move_rel',
         column1='account_custom_report_id',
         column2='move_id', string='Facturas y Notas de Crédito',compute='_compute_apunte_ids')
+
+    balance = fields.Float(string='Saldo',compute='_compute_balance')
+    ignore_saldo = fields.Boolean(string='Ignorar saldo a favor de cliente en reportes',help='Marque esta casilla para ignorar los saldos en los reportes Excel.')
+                
+    @api.depends('apunte_ids')
+    def _compute_balance(self):
+        for rec in self:
+            if len(rec.apunte_ids) > 0:
+                rec.balance = sum(line.amount_residual for line in rec.apunte_ids)
+            else:
+                rec.balance =0
     
-    @api.depends('date_start','date_end','tipo','area','partner_id')
+    @api.depends('date_end','type','area','partner_id','fac_type')
     def _compute_apunte_ids(self):
         for rec in self:
                     # Primero, define el dominio inicial para los saldos a cobrar
             domain = [
-                ('account_id.user_type_id.type', '=', 'receivable'),
+                "&", ("account_id.account_type", "=", "asset_receivable"), ("account_id.non_trade", "=", False),
+                ('date', '<=', rec.date_end),
                 ('reconciled', '=', False),
-                ('move_id.state', '=', 'posted')
+                ('move_id.state', '=', 'posted'),
             ]
             # Filtrar por área si se seleccionó una
             if self.area:
                 domain.append(('partner_id.category_id', 'child_of', self.area.id))
-
             # Filtrar por contacto específico si se seleccionó
             if self.partner_id:
                 domain.append(('partner_id', '=', self.partner_id.id))
+            if self.fac_type == 'x':
+                domain.append(('move_id.journal_id.id','=',218))
+            if self.fac_type == 'fac':
+                domain.append(('move_id.journal_id.id','=',18))
             
-            saldos  = self.env['account.move.line'].search(domain)
+            saldos  = self.env['account.move.line'].search(domain).sorted(lambda l: l.partner_id.name)
             rec.apunte_ids = [Command.clear(), Command.set(saldos.ids)]
             rec.move_ids = [Command.clear()]
 
@@ -81,59 +103,90 @@ class CustomReportExport:
     def __init__(self, record):
         self.record = record
         
-    def format_salta_excel(self,record):
+    def format_por_cobrar_excel(self,record):
         formatted_lines = []
-        for apunte in record.move_ids:
-            line = []
-            line.append(str(apunte.date.strftime('%Y%m%d')))
-            line.append(str(self.tipoFacturaSalta(apunte)))
-            line.append(self.clean_string(str(apunte.l10n_latam_document_number)))
-            line.append(str(self.razonSocial(apunte.partner_id)))
-            line.append(str(self.nrodeIdentificacion(apunte.partner_id)))
-            line.append(float('{:.2f}'.format(self.montoSujetoARetencion(apunte,self.record.tax_group_id_ret_tucuman,2))))
-            formatted_lines.append(line)
-        head = ['fecha', 'tipo', 'comprobant','razon','cuit','neto']
+        fecha = ['Al', record.date_end.strftime('%Y/%m/%d'),'','']
+        head = ['Fecha', 'Razon','Factura','Total Factura/Pago']
+        formatted_lines.append(fecha)
         formatted_lines.append(head)
-        reversed_data = list(reversed(formatted_lines))
-        return reversed_data
-
-    def format_Excel_generico(self,record,taxgroup_ret,tax_group_perc):
-        formatted_lines = []
-        for apunte in record.apunte_ids:
+        sum_cliente = 0
+        sum_total = 0
+        cont_cliente = 0
+        for index, apunte in enumerate(record.apunte_ids):
             line = []
+            sum_cliente += apunte.amount_residual
+            cont_cliente += 1
+            siguiente_apunte = record.apunte_ids[index + 1] if index + 1 < len(record.apunte_ids) else None
             tipo_operacion = self.tipoOperacion(apunte)
             comprobante = self.obtenerComprobante(apunte,tipo_operacion)
-            line.append(str(apunte.date.strftime('%Y%m%d')))
-            line.append(apunte.move_name)
+            line.append(str(apunte.date.strftime('%Y/%m/%d')))
             line.append(self.razonSocial(apunte.partner_id))
             line.append(apunte.name)
-            line.append(float('{:.2f}'.format(apunte.debit)))
-            line.append(float('{:.2f}'.format(apunte.credit)))
-            line.append(float('{:.2f}'.format(self.porcentajeAlicuota(comprobante,taxgroup_ret,tax_group_perc,tipo_operacion))))
-            line.append(float('{:.2f}'.format(self.montoSujetoARetencion(comprobante,taxgroup_ret,tipo_operacion))))
-            line.append(float('{:.2f}'.format(float(self.montoComprobante(comprobante,tipo_operacion)))))                             
+            line.append(apunte.amount_residual)
+            if cont_cliente == 1:
+                head = [self.razonSocial(apunte.partner_id),'','','','']
+                formatted_lines.append(head)
+                cliente_start_index = len(formatted_lines)- 1
             formatted_lines.append(line)
-        fecha = ['Periodo', record.date_start.strftime('%Y/%m/%d'), record.date_end.strftime('%Y/%m/%d')]
-        head = ['Fecha', 'Asiento contable', 'Razon','Nro. Cert/Perc','Ret/Per Debito','Ret/Per Credito','Porcentaje Ret/Per','Neto','Total Factura/Pago']
-        formatted_lines.append(head)
-        formatted_lines.append(fecha)
-        reversed_data = list(reversed(formatted_lines))
-        return reversed_data
+            if siguiente_apunte is None or apunte.partner_id != siguiente_apunte.partner_id:
+                line2 = ['','','','',sum_cliente]
+                formatted_lines.append(line2)
+                if sum_cliente < 0 and record.ignore_saldo:
+                    del formatted_lines[cliente_start_index:cliente_start_index + cont_cliente + 2]  # +1 para incluir la línea del saldo
+                sum_cliente = 0
+                cont_cliente = 0
+        return formatted_lines
     
     def generate_excel_report(self):
         output = BytesIO()
         workbook = xlsxwriter.Workbook(output, {'in_memory': True})
         worksheet = workbook.add_worksheet()
 
-        if self.record.municipalidad == 'cobrar':
-            dataExcel= self.format_salta_excel(self.record)
+        total_format = workbook.add_format({
+        'bold': True,
+        'font_color': 'white',  # Puedes cambiar el color del texto si lo deseas
+        'bg_color': '#714b67',  # Cambiar el color de fondo
+        'align': 'left',  # Alineación a la derecha
+        'valign': 'vcenter'  # Alineación vertical centrada
+        })
+        total_number_format = workbook.add_format({
+        'bold': True,
+        'font_color': 'white',  # Puedes cambiar el color del texto si lo deseas
+        'bg_color': '#714b67',  # Cambiar el color de fondo
+        'valign': 'vcenter'  # Alineación vertical centrada
+        })
+        client_header_format = workbook.add_format({
+        'bold': True,
+        'font_color': '#714b67',  # Puedes cambiar el color del texto si lo deseas
+        'valign': 'vcenter'  # Alineación vertical centrada
+        })
+        header_format = workbook.add_format({
+        'font_size': 12,  # Tamaño de fuente más grande
+        'bold': True,
+        'align': 'left',
+        'bg_color': '#714b67',
+        'font_color': 'white'})
+        
+        if self.record.type == 'cobrar':
+            dataExcel= self.format_por_cobrar_excel(self.record)
         # Ejemplo de datos
         # Escribir datos en el archivo Excel
         row = 0
-        for line in dataExcel:
+        for index,line in enumerate(dataExcel):
             col = 0
             for item in line:
-                worksheet.write(row, col, item)
+                if index == 0 or index == 1:
+                    worksheet.write(row, col, item, header_format)
+                elif line[0] != '' and line[1] == '':
+                    worksheet.merge_range(row,0, row,3,line[0], client_header_format)
+                    break
+                elif line[3] == '' and line[4] != '':
+                    # Merge de las primeras cuatro celdas y escribir "Total"
+                    worksheet.merge_range(row,0, row,2,'Total', total_format)
+                    # Escribir el valor del total en la quinta celda
+                    worksheet.write(row, 3, line[4], total_number_format)
+                else:
+                    worksheet.write(row, col, item)
                 col += 1
             row += 1
         #worksheet.write_formula(row, 4, f'=SUM(E3:E{row})', None, {'calculate_on_open': True})
@@ -151,7 +204,7 @@ class CustomReportExport:
         output.close()
 
         attachment = self.record.env['ir.attachment'].create({
-            'name': 'informe_ddjj.xlsx',
+            'name': 'Informe a cobrar.xlsx',
             'type': 'binary',
             'datas': file_data,
             'mimetype': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -162,7 +215,11 @@ class CustomReportExport:
             'url': '/web/content/%s?download=true' % attachment.id,
             'target': 'self',
         }
-    
+    def tipoOperacion(self,apunte):
+        if apunte.tax_line_id.type_tax_use == 'sale':
+            return 2
+        else:
+            return 1
     def obtenerComprobante(self,apunte,tipo_operacion):
         if tipo_operacion == 1:
             return apunte.move_id.payment_id
@@ -246,7 +303,6 @@ class CustomReportExport:
     
     def nrodeIdentificacion(self,contacto):
         return contacto.vat
-    
     def razonSocial(self,contacto):
         if contacto.parent_id:
             return contacto.parent_id.name
