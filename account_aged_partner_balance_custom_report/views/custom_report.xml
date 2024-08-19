@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <!-- Vista de formulario para el modelo account.ddjj -->
-    <record model="ir.ui.view" id="view_account_ddjj_form">
+    <record model="ir.ui.view" id="view_account_custom_aged_report_form">
       <field name="name">account.custom.report.aged.form</field>
       <field name="model">account.custom.report.aged</field>
       <field name="arch" type="xml">
@@ -42,12 +42,20 @@
       </field>
     </record>
 
-    <!-- Acción para el modelo account.ddjj 
-    <record id="action_account_custom_report_aged" model="ir.actions.act_window" >
-        <field name="name">Reporte personalizado</field>
+    <record model="ir.actions.act_window" id="action_account_custom_aged_report_form">
+        <field name="name">Reportes cuentas por cobrar resumido</field>
         <field name="res_model">account.custom.report.aged</field>
         <field name="view_mode">form</field>
-        <field name="view_id" ref="view_account_custom_report_aged_form"/>
+        <field name="view_id" ref="view_account_custom_aged_report_form"/>
+        <field name="target">current</field>
     </record>
--->
+
+    <!-- Menú en Contabilidad -> Reportes -->
+    <menuitem
+        id="menu_account_custom_aged_report_form"
+        name="Reportes cuentas por cobrar/pagar"
+        parent="account.menu_finance_reports"
+        action="action_account_custom_aged_report_form"
+        sequence="10"/>
+    
 </odoo>

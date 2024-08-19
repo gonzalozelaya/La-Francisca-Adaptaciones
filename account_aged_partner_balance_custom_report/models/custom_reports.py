@@ -55,7 +55,7 @@ class AccountCustomReportAged(models.TransientModel):
         column2='move_id', string='Facturas y Notas de Crédito',compute='_compute_apunte_ids')
 
     balance = fields.Float(string='Saldo',compute='_compute_balance')
-    ignore_saldo = fields.Boolean(string='Ignorar saldo a favor de cliente en reportes',help='Marque esta casilla para ignorar los saldos en los reportes Excel.')
+    ignore_saldo = fields.Boolean(string='Ignorar saldo a favor de cliente en reportes',default=True,help='Marque esta casilla para ignorar los saldos en los reportes Excel.')
                 
     @api.depends('apunte_ids')
     def _compute_balance(self):
