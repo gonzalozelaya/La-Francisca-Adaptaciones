@@ -1,11 +1,7 @@
 from odoo import models, fields, api, Command, _
 import base64
-from io import StringIO,BytesIO
-import io
-import zipfile
-from datetime import datetime, date, timedelta
+from io import BytesIO
 import re
-import unicodedata
 import xlsxwriter
 
 class AccountCustomReportAged(models.TransientModel):
@@ -145,26 +141,26 @@ class CustomReportExport:
         total_format = workbook.add_format({
         'bold': True,
         'font_color': 'white',  # Puedes cambiar el color del texto si lo deseas
-        'bg_color': '#714b67',  # Cambiar el color de fondo
+        'bg_color': '#1d1d1b',  # Cambiar el color de fondo
         'align': 'left',  # Alineación a la derecha
         'valign': 'vcenter'  # Alineación vertical centrada
         })
         total_number_format = workbook.add_format({
         'bold': True,
         'font_color': 'white',  # Puedes cambiar el color del texto si lo deseas
-        'bg_color': '#714b67',  # Cambiar el color de fondo
+        'bg_color': '#1d1d1b',  # Cambiar el color de fondo
         'valign': 'vcenter'  # Alineación vertical centrada
         })
         client_header_format = workbook.add_format({
         'bold': True,
-        'font_color': '#714b67',  # Puedes cambiar el color del texto si lo deseas
+        'font_color': '#1d1d1b',  # Puedes cambiar el color del texto si lo deseas
         'valign': 'vcenter'  # Alineación vertical centrada
         })
         header_format = workbook.add_format({
         'font_size': 12,  # Tamaño de fuente más grande
         'bold': True,
         'align': 'left',
-        'bg_color': '#714b67',
+        'bg_color': '#c69c6d',
         'font_color': 'white'})
         
         if self.record.type == 'cobrar':
@@ -179,6 +175,7 @@ class CustomReportExport:
                     worksheet.write(row, col, item, header_format)
                 elif line[0] != '' and line[1] == '':
                     worksheet.merge_range(row,0, row,3,line[0], client_header_format)
+                    worksheet.set_row(row,20)
                     break
                 elif line[3] == '' and line[4] != '':
                     # Merge de las primeras cuatro celdas y escribir "Total"
