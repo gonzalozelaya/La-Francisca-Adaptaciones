@@ -86,7 +86,7 @@ class AccountCustomReportAged(models.TransientModel):
             if self.fac_type == 'fac':
                 domain.append(('move_id.journal_id.id','=',18))
             
-            saldos  = self.env['account.move.line'].search(domain).sorted(lambda l: l.partner_id.name)
+            saldos  = self.env['account.move.line'].search(domain).sorted(lambda l: l.partner_id.name or '')
             rec.apunte_ids = [Command.clear(), Command.set(saldos.ids)]
             rec.move_ids = [Command.clear()]
 
