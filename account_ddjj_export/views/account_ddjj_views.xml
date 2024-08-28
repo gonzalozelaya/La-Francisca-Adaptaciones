@@ -66,9 +66,8 @@
       <field name="target">current</field>
     </record>
 
-    <!-- Menú principal para el wizard -->
-    <menuitem id="menu_account_ddjj_root" name="Account DDJJ" sequence="10" />
-    <menuitem id="menu_account_ddjj" name="Account DDJJ"
-          parent="menu_account_ddjj_root" action="action_account_ddjj"/>
+     <!-- Menú principal para el wizard -->
+    <menuitem id="menu_account_ddjj" name="Declaración Jurada"
+          parent="base.menu_administration" action="action_account_ddjj"/>
   </data>
 </odoo>
