@@ -12,8 +12,8 @@
     'author': "OutsourceArg",
     'website': "http://www.outsourcearg.com",
     'installable': True,
-    'application':True,
-
+    'application':False,
+    'icon': '/account_ddjj_export/static/description/icon.png',  # Ruta al icono
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/master/odoo/addons/base/module/module_data.xml
     # for the full list

@@ -7,80 +7,80 @@
         <field name="inherit_id" ref="base.res_config_settings_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form" position="inside">
-                <app data-string="Account DDJJ Settings" string="Account DDJJ Settings" name="account_ddjj_settings">
-                    <block title="Configuración de DDJJ de Cuentas" name="account_ddjj_block">
-                        <setting string="Grupo de Impuestos"
+                <app data-string="Declaracion Jurada" string="Declaracion Jurada" name="account_ddjj_export">
+                    <block title="Configuración de DDJJ de AGIP" name="account_ddjj_block">
+                        <setting string="Grupo de Impuestos Ret. AGIP"
                                  help="Seleccione el grupo de impuestos"
                                  id="tax_group_setting">
                             <field name="tax_group_id_ret_agip"/>
                         </setting>
-                        <setting string="Cuenta del Plan de Cuentas"
+                        <setting string="Plan de Cuentas Ret. AGIP"
                                  help="Seleccione la cuenta del plan de cuentas"
                                  id="account_setting">
                             <field name="account_id_ret_agip"/>
                         </setting>
-                        <setting string="Grupo de Impuestos"
+                        <setting string="Grupo de Impuestos Perc. AGIP"
                                  help="Seleccione el grupo de impuestos"
                                  id="tax_group_setting">
                             <field name="tax_group_id_perc_agip"/>
                         </setting>
-                        <setting string="Cuenta del Plan de Cuentas"
+                        <setting string="Plan de Cuentas Perc. AGIP"
                                  help="Seleccione la cuenta del plan de cuentas"
                                  id="account_setting">
                             <field name="account_id_perc_agip"/>
                         </setting>
                     </block>
                     <block title="Configuración de DDJJ de Jujuy" name="account_ddjj_block">
-                        <setting string="Grupo de Impuestos"
+                        <setting string="Grupo de Impuestos Ret. Jujuy"
                                  help="Seleccione el grupo de impuestos"
                                  id="tax_group_setting">
                             <field name="tax_group_id_ret_jujuy"/>
                         </setting>
-                        <setting string="Cuenta del Plan de Cuentas"
+                        <setting string="Plan de Cuentas Ret. Jujuy"
                                  help="Seleccione la cuenta del plan de cuentas"
                                  id="account_setting">
                             <field name="account_id_ret_jujuy"/>
                         </setting>
-                        <setting string="Grupo de Impuestos"
+                        <setting string="Grupo de Impuestos Perc. Jujuy"
                                  help="Seleccione el grupo de impuestos"
                                  id="tax_group_setting">
                             <field name="tax_group_id_perc_jujuy"/>
                         </setting>
-                        <setting string="Cuenta del Plan de Cuentas"
+                        <setting string="Plan de Cuentas Perc. Jujuy"
                                  help="Seleccione la cuenta del plan de cuentas"
                                  id="account_setting">
                             <field name="account_id_perc_jujuy"/>
                         </setting>
                     </block>
                     <block title="Configuración de DDJJ de Tucuman" name="account_ddjj_block">
-                        <setting string="Grupo de Impuestos"
+                        <setting string="Grupo de Impuestos Ret. Tucuman"
                                  help="Seleccione el grupo de impuestos"
                                  id="tax_group_setting">
                             <field name="tax_group_id_ret_tucuman"/>
                         </setting>
-                        <setting string="Cuenta del Plan de Cuentas"
+                        <setting string="Plan de Cuentas Ret. Tucuman"
                                  help="Seleccione la cuenta del plan de cuentas"
                                  id="account_setting">
                             <field name="account_id_ret_tucuman"/>
                         </setting>
-                        <setting string="Grupo de Impuestos"
+                        <setting string="Grupo de Impuestos Perc. Tucuman"
                                  help="Seleccione el grupo de impuestos"
                                  id="tax_group_setting">
                             <field name="tax_group_id_perc_tucuman"/>
                         </setting>
-                        <setting string="Cuenta del Plan de Cuentas"
+                        <setting string="Plan de Cuentas Perc. Tucuman"
                                  help="Seleccione la cuenta del plan de cuentas"
                                  id="account_setting">
                             <field name="account_id_perc_tucuman"/>
                         </setting>
                     </block>
                     <block title="Configuración de DDJJ de SICORE" name="account_ddjj_block">
-                        <setting string="Grupo de Impuestos"
+                        <setting string="Grupo de Impuestos SICORE (Ganancias)"
                                  help="Seleccione el grupo de impuestos"
                                  id="tax_group_setting_ret_sicore">
                             <field name="tax_group_id_ret_sicore"/>
                         </setting>
-                        <setting string="Cuenta del Plan de Cuentas"
+                        <setting string="Plan de Cuentas SICORE (Ganancias)"
                                  help="Seleccione la cuenta del plan de cuentas"
                                  id="account_setting">
                             <field name="account_id_ret_sicore"/>

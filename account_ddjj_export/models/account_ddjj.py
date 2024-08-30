@@ -4,9 +4,12 @@ from io import StringIO,BytesIO
 import io
 import zipfile
 from datetime import datetime, date, timedelta
+from dateutil.relativedelta import relativedelta
+import locale
 import re
 import unicodedata
 import xlsxwriter
+from odoo.exceptions import UserError
 
 class AccountDDJJ(models.TransientModel):
 
@@ -119,8 +122,21 @@ class AccountDDJJ(models.TransientModel):
     _name = 'account.ddjj'
     _description = 'Modelo para DDJJ de cuentas'
     
-    date_start = fields.Date(string='Fecha Inicio', required=True,default=lambda self: fields.Date.to_string(datetime(datetime.now().year, datetime.now().month, 1)))
-    date_end = fields.Date(string='Fecha Fin', required=True, default=lambda self: fields.Date.today())
+    date_start = fields.Date(
+        string='Fecha Inicio', 
+        required=True,
+        default=lambda self: fields.Date.to_string(
+            datetime.now().replace(day=1) - relativedelta(months=1)
+        )
+    )
+    
+    date_end = fields.Date(
+        string='Fecha Fin', 
+        required=True,
+        default=lambda self: fields.Date.to_string(
+            datetime.now().replace(day=1) - timedelta(days=1)
+        )
+    )
     
     ignore_nc = fields.Boolean(string='Ignorar N/C',help='Marque esta casilla para ignorar las Notas de Crédito.')
     
@@ -142,7 +158,7 @@ class AccountDDJJ(models.TransientModel):
        ('2', 'Retenciones'),
         ('3', 'Percepciones'),
         ('4', 'Notas de credito')
-    ], default='1')
+    ], default='1',required=True)
 
     apuntes_a_mostrar_iva = fields.Selection(string ='Tipo',selection =[
         ('1','Compras'),
@@ -238,6 +254,33 @@ class AccountDDJJ(models.TransientModel):
         exporter = DDJJExport(self)
         return exporter.generate_excel_report()
         
+    def get_month_name_or_date_range(self):
+        self.ensure_one()
+        if not self.date_start or not self.date_end:
+            return ''
+
+        # Convertir a objetos datetime para comparar
+        start_date = fields.Date.from_string(self.date_start)
+        end_date = fields.Date.from_string(self.date_end)
+
+        # Guardar la localización actual
+        current_locale = locale.getlocale(locale.LC_TIME)
+        try:
+            # Cambiar temporalmente la localización a español
+            locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')  # Ajusta según la localización disponible en tu servidor
+
+            # Comparar si están en el mismo mes y año
+            if start_date.month == end_date.month and start_date.year == end_date.year:
+                # Devolver el nombre del mes en español
+                result = start_date.strftime('%B %Y').capitalize()  # Ejemplo: 'Marzo 2024'
+            else:
+                # Devolver el rango de fechas en español
+                result = f"{start_date.strftime('%d %b %Y')} - {end_date.strftime('%d %b %Y')}"
+        finally:
+            # Restaurar la localización original
+            locale.setlocale(locale.LC_TIME, current_locale)
+
+        return result
 class DDJJExport:
     def __init__(self, record):
         self.record = record
@@ -361,14 +404,14 @@ class DDJJExport:
             formatted_line += str(comprobante.sequence_number).rjust(16,'0')    #Número de comprobante
             formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).rjust(10,'0')           #Fecha de comprobante
             formatted_line += '{:.2f}'.format(self.montoComprobante(comprobante,tipo_operacion)).replace('.', ',').rjust(16, '0')      #Monto de comprobante
-            formatted_line += str(self.buscarNroCertificado(comprobante,53,tipo_operacion)).split('-')[-1].ljust(16,' ')     #Nro de certificado propio
+            formatted_line += str(self.buscarNroCertificado(comprobante,record.tax_group_id_ret_agip,tipo_operacion)).split('-')[-1].ljust(16,' ')     #Nro de certificado propio
             formatted_line += str(self.tipodeIdentificacion(apunte.partner_id))   #Tipo de identificacion 1:CDI/2:CUIL/3:CUIT
             formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).rjust(11,'0')    #Nro de identificacion
             formatted_line += str(self.situacionIb(apunte.partner_id))         #Situacion IB
             formatted_line += str(self.nroIb(apunte.partner_id)).rjust(11,'0')  #Nro IB
             formatted_line += str(self.situacionIva(apunte.partner_id))        #Situacion IVA
             formatted_line += (str(self.razonSocial(apunte.partner_id))[:30] if len(str(self.razonSocial(apunte.partner_id))) > 30 else str(self.razonSocial(apunte.partner_id))).ljust(30, ' ') #Razon social
-            formatted_line += '{:.2f}'.format(self.importeOtrosConceptos(apunte,tipo_operacion,comprobante,53)).replace('.', ',').rjust(16,'0') #Importe otros conceptos 
+            formatted_line += '{:.2f}'.format(self.importeOtrosConceptos(apunte,tipo_operacion,comprobante,self.record.tax_group_id_ret_agip)).replace('.', ',').rjust(16,'0') #Importe otros conceptos 
             formatted_line += '{:.2f}'.format(self.ImporteIva(apunte,comprobante,tipo_operacion,self.record.tax_group_id_ret_agip)).replace('.', ',').rjust(16,'0') #Importe IVA 
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,self.record.tax_group_id_ret_agip,tipo_operacion)).replace('.', ',').rjust(16, '0') #Monto sujeto a retención (Neto) 
             formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,self.record.tax_group_id_ret_agip,self.record.tax_group_id_perc_agip,tipo_operacion)).replace('.', ',').rjust(5, '0') #Alicuota
@@ -424,8 +467,8 @@ class DDJJExport:
                 for factura in facturas:
                     comprobante_factura = self.obtenerComprobante(factura,2)
                     tipo_operacion = self.tipoOperacion(factura)
-                    formatted_line = str(self.extract_last_four_digits(self.buscarNroCertificado(comprobante,56,1))).rjust(6,' ')
-                    formatted_line += str(factura.date.strftime('%Y')).ljust(4,'')
+                    formatted_line = str(self.extract_last_four_digits(self.buscarNroCertificado(comprobante,record.tax_group_id_ret_jujuy,1))).rjust(6,' ')
+                    formatted_line += str(factura.date.strftime('%YYYY')).ljust(4,' ')
                     formatted_line +=' 1' #Letra de factura(pendiente)
                     formatted_line += str(self.nroSucursalProveedor(comprobante)).rjust(4,' ')
                     formatted_line += str(comprobante_factura.sequence_number).rjust(8,' ')
@@ -501,8 +544,8 @@ class DDJJExport:
             formatted_line += (str(self.razonSocial(apunte.partner_id))[:40] if len(str(self.razonSocial(apunte.partner_id))) > 40 else str(self.razonSocial(apunte.partner_id))).ljust(40,' ')
             formatted_line += (str(self.domicilioPartner(apunte.partner_id))[:40] if len(str(self.domicilioPartner(apunte.partner_id))) > 40 else str(self.domicilioPartner(apunte.partner_id))).ljust(40,' ')
             formatted_line += str(00000).ljust(5,'0')
-            formatted_line += (str(self.localidadPartner(apunte.partner_id))[:15] if len(str(self.localidadPartner(apunte.partner_id))) > 15 else str(self.eliminar_tildes(self.localidadPartner(apunte.partner_id)))).ljust(15,' ')
-            formatted_line += (str(self.provinciaPartner(apunte.partner_id))[:15] if len(str(self.provinciaPartner(apunte.partner_id))) > 15 else str(self.eliminar_tildes(self.provinciaPartner(apunte.partner_id)))).ljust(15,' ')
+            formatted_line += (str(self.localidadPartner(apunte.partner_id))[:15] if len(str(self.localidadPartner(apunte.partner_id))) > 15 else str(self.eliminar_tildes(self.localidadPartner(apunte.partner_id),apunte.partner_id))).ljust(15,' ')
+            formatted_line += (str(self.provinciaPartner(apunte.partner_id))[:15] if len(str(self.provinciaPartner(apunte.partner_id))) > 15 else str(self.eliminar_tildes(self.provinciaPartner(apunte.partner_id),apunte.partner_id))).ljust(15,' ')
             formatted_line += str('').ljust(11,' ')
             formatted_line += (str(self.codigoPostalPartner(apunte.partner_id))[:8] if len(str(self.codigoPostalPartner(apunte.partner_id))) > 8 else str(self.codigoPostalPartner(apunte.partner_id))).rjust(8,' ')
 
@@ -610,12 +653,16 @@ class DDJJExport:
             
             # Crear un adjunto en Odoo
             attachment = self.record.env['ir.attachment'].create({
-                'name': 'RetPer_AGIP.txt',
+                'name': f"RetPer_AGIP_{self.record.get_month_name_or_date_range()}.txt",
                 'type': 'binary',
                 'datas': file_content_base64,
                 'mimetype': 'text/plain',
             })
-            return self.download_zip(self.record,[attachment.id,attachment2.id])
+            return {
+                'type': 'ir.actions.act_url',
+                'url': '/web/content/%s?download=true' % attachment.id,
+                'target': 'self',
+            }
             
         elif self.record.municipalidad == 'tucuman':
             txt_content = self.format_tucuman_datos(self.record)
@@ -655,7 +702,7 @@ class DDJJExport:
             file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
             # Crear un adjunto en Odoo
             attachment = self.record.env['ir.attachment'].create({
-                'name': 'Sicore.txt',
+                'name': f"Sicore_{self.record.get_month_name_or_date_range()}.txt",
                 'type': 'binary',
                 'datas': file_content_base64,
                 'mimetype': 'text/plain',
@@ -674,7 +721,7 @@ class DDJJExport:
 
                 # Crear un adjunto en Odoo
                 attachment = self.record.env['ir.attachment'].create({
-                    'name': 'Percepciones_Jujuy.txt',
+                    'name': f"Perc_Jujuy_{self.record.get_month_name_or_date_range()}.txt",
                     'type': 'binary',
                     'datas': file_content_base64,
                     'mimetype': 'text/plain',
@@ -754,7 +801,7 @@ class DDJJExport:
         output.close()
 
         attachment = self.record.env['ir.attachment'].create({
-            'name': 'informe_ddjj.xlsx',
+            'name': f"informe_{self.record.municipalidad}_{self.record.get_month_name_or_date_range()}.xlsx",
             'type': 'binary',
             'datas': file_data,
             'mimetype': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -935,7 +982,10 @@ class DDJJExport:
     def provinciaPartner(self,contacto):
         return contacto.state_id.name
     def codigoPostalPartner(self, contacto):
-        return contacto.zip
+        if contacto.zip:
+            return contacto.zip
+        else:
+            raise UserError(f"No se encontró el código postal en el contacto: {contacto.name}")
     def ImporteIva(self,apunte,comprobante,tipo_operacion,taxgroup):
         if tipo_operacion == 1:
             return 0
@@ -1091,18 +1141,21 @@ class DDJJExport:
         
         return last_four_digits
 
-    def eliminar_tildes(self,texto):
+    def eliminar_tildes(self,texto,partner):
         # Normalizar el texto en forma NFC
-        texto_normalizado = unicodedata.normalize('NFD', texto)
-        # Filtrar los caracteres diacríticos
-        texto_sin_tildes = ''.join(c for c in texto_normalizado if unicodedata.category(c) != 'Mn')
-        # Normalizar el texto en forma NFC
+        if texto:
+            texto_normalizado = unicodedata.normalize('NFD', texto)
+            # Filtrar los caracteres diacríticos
+            texto_sin_tildes = ''.join(c for c in texto_normalizado if unicodedata.category(c) != 'Mn')
+            # Normalizar el texto en forma NFC
+        else:
+            raise UserError(f"No se encontró el dato necesario en el contacto: {partner.name}")
         return unicodedata.normalize('NFC', texto_sin_tildes)
     
     def download_zip(self,record, attachment_ids):
             # Obtener los archivos adjuntos
             attachments = record.env['ir.attachment'].sudo().browse(attachment_ids)
-            name = 'DDJJ_Tucuman'
+            name = 'RetPer_Tucuman ' + record.get_month_name_or_date_range()
             # Crear un buffer en memoria para el archivo ZIP
             buffer = io.BytesIO()
             with zipfile.ZipFile(buffer, 'w') as zip_file:
@@ -1117,9 +1170,9 @@ class DDJJExport:
             zip_content_base64 = base64.b64encode(zip_content).decode('utf-8')
 
             if self.record.municipalidad == 'jujuy':
-                name = 'DDJJ_Jujuy'
+                name = 'Ret_Jujuy' + record.get_month_name_or_date_range()
             if self.record.municipalidad == 'iva':
-                name = 'IVA_COMPRAS'
+                name = 'IVA_COMPRAS' + record.get_month_name_or_date_range()
             # Crear un archivo adjunto en Odoo
             attachment = self.record.env['ir.attachment'].create({
                 'name': name,
@@ -1134,3 +1187,4 @@ class DDJJExport:
                 'url': '/web/content/%s?download=true' % attachment.id,
                 'target': 'self',
             }
+   
