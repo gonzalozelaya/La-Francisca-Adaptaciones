@@ -401,7 +401,8 @@ class DDJJExport:
             formatted_line += str(apunte.date.strftime('%d/%m/%Y')).rjust(10)   #Fecha de Retención/Percepción
             formatted_line += str(self.tipoComprobanteOrigen(tipo_operacion,apunte)).rjust(2,'0') #Tipo comprobante de Origen
             formatted_line += str(self.tipoFactura(apunte,tipo_operacion)).rjust(1)                                               #Tipo de operación
-            formatted_line += str(comprobante.sequence_number).rjust(16,'0')    #Número de comprobante
+            formatted_line += self.AgipSequenceNumber(comprobante,tipo_operacion)
+            #formatted_line += str(comprobante.sequence_number).rjust(16,'0')    #Número de comprobante
             formatted_line += str(comprobante.date.strftime('%d/%m/%Y')).rjust(10,'0')           #Fecha de comprobante
             formatted_line += '{:.2f}'.format(self.montoComprobante(comprobante,tipo_operacion)).replace('.', ',').rjust(16, '0')      #Monto de comprobante
             formatted_line += str(self.buscarNroCertificado(comprobante,record.tax_group_id_ret_agip,tipo_operacion)).split('-')[-1].ljust(16,' ')     #Nro de certificado propio
@@ -417,6 +418,34 @@ class DDJJExport:
             formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante,self.record.tax_group_id_ret_agip,self.record.tax_group_id_perc_agip,tipo_operacion)).replace('.', ',').rjust(5, '0') #Alicuota
             formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,self.record.tax_group_id_ret_agip,tipo_operacion)).replace('.', ',').rjust(16, '0')
             formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante,self.record.tax_group_id_ret_agip,tipo_operacion)).replace('.', ',').rjust(16, '0')
+             
+            formatted_lines.append(formatted_line)
+            formatted_lines_reversed = list(reversed(formatted_lines))
+        formatted_lines.append('')
+        return "\n".join(formatted_lines_reversed)
+
+
+
+    def format_line_credit(self, record):
+        formatted_lines = []
+        for apunte in record.apunte_ids:
+            tipo_operacion = self.tipoOperacion(apunte)
+            comprobante = self.obtenerComprobante(apunte,tipo_operacion)
+            formatted_line = str(tipo_operacion)                                                #Tipo de Operación 1:Retencion/2:Percepción
+            formatted_line += '0060'
+            formatted_line += str(comprobante.sequence_number).rjust(8,'0')    #Número de comprobante
+            formatted_line += str(apunte.date.strftime('%d/%m/%Y')).rjust(10)   #Fecha de Retención/Percepción
+            formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,self.record.tax_group_id_ret_agip,tipo_operacion)).replace('.', ',').rjust(16, '0') #Monto sujeto a retención (Neto) 
+            formatted_line += '                '
+            formatted_line += str(self.tipoComprobanteOrigen(tipo_operacion,apunte)).rjust(2,'0')
+            formatted_line += str(self.tipoFactura(apunte,tipo_operacion)).rjust(1) #Tipo de operación
+            formatted_line += '00000060'
+            formatted_line += str(comprobante.reversed_entry_id.sequence_number).rjust(8,'0')    #Número de comprobante
+            formatted_line += str(comprobante.partner_id.vat).rjust(11,'0')
+            formatted_line += '029'
+            formatted_line += str(comprobante.reversed_entry_id.date.strftime('%d/%m/%Y')).rjust(10)
+            formatted_line += '{:.2f}'.format(self.montoRetenido(apunte,comprobante.reversed_entry_id,self.record.tax_group_id_ret_agip,tipo_operacion)).replace('.', ',').rjust(16, '0')
+            formatted_line += '{:.2f}'.format(self.porcentajeAlicuota(comprobante.reversed_entry_id,self.record.tax_group_id_ret_agip,self.record.tax_group_id_perc_agip,tipo_operacion)).replace('.', ',').rjust(5, '0') #Alicuota
              
             formatted_lines.append(formatted_line)
             formatted_lines_reversed = list(reversed(formatted_lines))
@@ -445,8 +474,9 @@ class DDJJExport:
             formatted_line += str('0')
             formatted_line += str(self.cantidadFacturas(comprobante)).rjust(4,' ')
             formatted_line += str(self.nroSucursalProveedor(comprobante)).rjust(2,' ')
+            formatted_line += str(' ')
             formatted_line += str(self.nroIb(apunte.partner_id)).rjust(11,' ')
-            formatted_line += str('0')
+            #formatted_line += str('')
             formatted_line += str(apunte.date.strftime('%Y%m')).ljust(6,' ')
             formatted_line += str('0')
             formatted_lines.append(formatted_line)
@@ -459,25 +489,20 @@ class DDJJExport:
             comprobante = self.obtenerComprobante(apunte,tipo_operacion)
             reconcile_id = False
             for line in comprobante.matched_move_line_ids:
-                if line.full_reconcile_id:
-                    reconcile_id = line.full_reconcile_id
-            if reconcile_id:
-                facturas = self.record.env['account.move.line'].search([
-                        ('full_reconcile_id', '=', line.full_reconcile_id.id),('credit', '>', 0)])
-                for factura in facturas:
-                    comprobante_factura = self.obtenerComprobante(factura,2)
-                    tipo_operacion = self.tipoOperacion(factura)
-                    formatted_line = str(self.extract_last_four_digits(self.buscarNroCertificado(comprobante,record.tax_group_id_ret_jujuy,1))).rjust(6,' ')
-                    formatted_line += str(factura.date.strftime('%YYYY')).ljust(4,' ')
-                    formatted_line +=' 1' #Letra de factura(pendiente)
-                    formatted_line += str(self.nroSucursalProveedor(comprobante)).rjust(4,' ')
-                    formatted_line += str(comprobante_factura.sequence_number).rjust(8,' ')
-                    formatted_line += str(comprobante_factura.date.strftime('%Y%m%d')).rjust(8,'0')           #Fecha de comprobante
-                    formatted_line += '{:.2f}'.format(self.montoComprobante(comprobante_factura,2)).replace('.', '').rjust(12,'0')
-                    formatted_line += str(self.nroSucursalProveedor(comprobante)).rjust(3,' ')
-                    formatted_line += str(comprobante_factura.date.strftime('%Y%m')).rjust(6,'0')
-                    formatted_line += '0'
-                    formatted_lines.append(formatted_line)
+                factura = line
+                comprobante_factura = self.obtenerComprobante(factura,2)
+                tipo_operacion = self.tipoOperacion(factura)
+                formatted_line = str(self.extract_last_four_digits(self.buscarNroCertificado(comprobante,record.tax_group_id_ret_jujuy,1))).rjust(6,' ')
+                formatted_line += str(factura.date.strftime('%Y')).ljust(4,' ')
+                formatted_line +=' 1' #Letra de factura(pendiente)
+                formatted_line += str(self.nroSucursalProveedor(comprobante)).rjust(4,' ')
+                formatted_line += str(comprobante_factura.sequence_number).rjust(8,' ')
+                formatted_line += str(comprobante_factura.date.strftime('%Y%m%d')).rjust(8,'0')           #Fecha de comprobante
+                formatted_line += '{:.2f}'.format(self.montoComprobante(comprobante_factura,2)).replace('.', '').rjust(12,'0')
+                formatted_line += str(self.nroSucursalProveedor(comprobante)).rjust(3,'0')
+                formatted_line += str(comprobante_factura.date.strftime('%Y%m')).rjust(6,'0')
+                formatted_line += '0'
+                formatted_lines.append(formatted_line)
         return "\n".join(formatted_lines)
     def format_jujuy_perc(self, record):
         formatted_lines = []
@@ -647,22 +672,40 @@ class DDJJExport:
             })
             return self.download_zip(self.record,[attachment.id,attachment2.id])
         if self.record.municipalidad == 'caba':
-            txt_content = self.format_line(self.record)
-            # Codificar el contenido en base64
-            file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
-            
-            # Crear un adjunto en Odoo
-            attachment = self.record.env['ir.attachment'].create({
-                'name': f"RetPer_AGIP_{self.record.get_month_name_or_date_range()}.txt",
-                'type': 'binary',
-                'datas': file_content_base64,
-                'mimetype': 'text/plain',
-            })
-            return {
-                'type': 'ir.actions.act_url',
-                'url': '/web/content/%s?download=true' % attachment.id,
-                'target': 'self',
-            }
+            if self.record.apuntes_a_mostrar == '4':
+                txt_content = self.format_line_credit(self.record)
+                # Codificar el contenido en base64
+                file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
+                
+                # Crear un adjunto en Odoo
+                attachment = self.record.env['ir.attachment'].create({
+                    'name': f"Nota_Credito_AGIP_{self.record.get_month_name_or_date_range()}.txt",
+                    'type': 'binary',
+                    'datas': file_content_base64,
+                    'mimetype': 'text/plain',
+                })
+                return {
+                    'type': 'ir.actions.act_url',
+                    'url': '/web/content/%s?download=true' % attachment.id,
+                    'target': 'self',
+                }
+            else:
+                txt_content = self.format_line(self.record)
+                # Codificar el contenido en base64
+                file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
+                
+                # Crear un adjunto en Odoo
+                attachment = self.record.env['ir.attachment'].create({
+                    'name': f"RetPer_AGIP_{self.record.get_month_name_or_date_range()}.txt",
+                    'type': 'binary',
+                    'datas': file_content_base64,
+                    'mimetype': 'text/plain',
+                })
+                return {
+                    'type': 'ir.actions.act_url',
+                    'url': '/web/content/%s?download=true' % attachment.id,
+                    'target': 'self',
+                }
             
         elif self.record.municipalidad == 'tucuman':
             txt_content = self.format_tucuman_datos(self.record)
@@ -812,7 +855,14 @@ class DDJJExport:
             'url': '/web/content/%s?download=true' % attachment.id,
             'target': 'self',
         }
-    
+    def documentoAfecadoporNotaCredito(self,nc):
+        return nc.reversed_entry_id.sequence_number
+        
+    def AgipSequenceNumber(self,comprobante,tipo_operacion):
+        if tipo_operacion == 2:
+            return '00000060'+ str(comprobante.sequence_number).rjust(8,'0')
+        else:
+            return str(comprobante.sequence_number).rjust(16,'0')
     def obtenerComprobante(self,apunte,tipo_operacion):
         if tipo_operacion == 1:
             return apunte.move_id.payment_id
@@ -1064,31 +1114,10 @@ class DDJJExport:
                 else: 
                     return apunte.debit
     def cantidadFacturas(self,comprobante):
-        paid_invoices_count = 0
-        for line in comprobante.matched_move_line_ids:
-                    if line.full_reconcile_id and paid_invoices_count == 0:
-                        related_movements = self.record.env['account.move.line'].search(
-                        [('full_reconcile_id', '=', line.full_reconcile_id.id)])
-                        for move_line in related_movements:
-                            if move_line.move_id.move_type in ('out_invoice', 'in_invoice') or move_line.credit > 0:
-                                paid_invoices_count += 1
-        return paid_invoices_count
+        return len(comprobante.matched_move_line_ids)
     def nroSucursalProveedor(self,comprobante):
         for line in comprobante.matched_move_line_ids:
-                    if line.full_reconcile_id:
-                        related_movements = self.record.env['account.move.line'].search(
-                        [('full_reconcile_id', '=', line.full_reconcile_id.id),('credit', '>', 0 )],limit=1)
-                        if related_movements:
-                            invoice = self.record.env['account.move'].search(
-                            [('id', '=', related_movements.move_id.id), ('move_type', 'in', ('out_invoice', 'in_invoice'))],
-                            limit=1
-                            )
-                            if invoice:
-                                return self.extract_number(invoice.sequence_prefix)
-                            else:
-                                return 0
-                    else:
-                        return 0
+            return self.extract_number_proveedor(line.move_id.sequence_prefix)
         return 0
 
     def FacturasRelacionadas(self,comprobante):
@@ -1128,7 +1157,19 @@ class DDJJExport:
     def extract_number(self,sequence_prefix):
         # Usamos una expresión regular para encontrar el número en la cadena
         return sequence_prefix[6:8]
+        
+    def extract_number_proveedor(self,sequence_prefix):
+         # Usamos una expresión regular para buscar el número después de los ceros iniciales
+        match = re.search(r'0*(\d+)-$', sequence_prefix)
+        if match:
+            # Tomamos el número capturado
+            number = match.group(1)
+            # Si el número tiene más de 2 dígitos, devolvemos los últimos 2
+            return number[-2:] if len(number) > 2 else number
+        else:
+            return None
     
+        
     def extract_last_four_digits(self,input_string):
         # Extraer los últimos 6 caracteres de la cadena
         last_six_digits = input_string[-6:]
