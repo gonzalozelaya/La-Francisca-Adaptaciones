@@ -56,6 +56,8 @@ class AccountCustomReportAged(models.TransientModel):
 
     balance = fields.Float(string='Saldo',compute='_compute_balance')
     ignore_saldo = fields.Boolean(string='Ignorar saldo a favor de cliente en reportes',default=True,help='Marque esta casilla para ignorar los saldos en los reportes Excel.')
+
+    ignore_sucursal = fields.Boolean(string='Ignorar ventas de sucursales',default=True,help='Marque esta casilla para ignorar las ventas de sucursales.')
                 
     @api.depends('apunte_ids')
     def _compute_balance(self):
@@ -65,7 +67,7 @@ class AccountCustomReportAged(models.TransientModel):
             else:
                 rec.balance =0
     
-    @api.depends('date_end','type','area','partner_id','fac_type')
+    @api.depends('date_end','type','area','partner_id','fac_type','ignore_sucursal')
     def _compute_apunte_ids(self):
         for rec in self:
                     # Primero, define el dominio inicial para los saldos a cobrar
@@ -76,6 +78,8 @@ class AccountCustomReportAged(models.TransientModel):
                 ('move_id.state', '=', 'posted'),
             ]
             # Filtrar por área si se seleccionó una
+            if self.ignore_sucursal:
+                 domain.append(('partner_id.category_id', 'not in', [2325]))               
             if self.area:
                 domain.append(('partner_id.category_id', 'child_of', self.area.id))
             # Filtrar por contacto específico si se seleccionó
@@ -102,7 +106,7 @@ class CustomReportExport:
     def format_por_cobrar_excel(self,record):
         formatted_lines = []
         fecha = ['Al', record.date_end.strftime('%Y/%m/%d'),'','']
-        head = ['Fecha', 'Razon','Factura','Total Factura/Pago']
+        head = ['Fecha', 'Razon','Zona','Factura','Total Factura/Pago']
         formatted_lines.append(fecha)
         formatted_lines.append(head)
         sum_cliente = 0
@@ -117,15 +121,17 @@ class CustomReportExport:
             comprobante = self.obtenerComprobante(apunte,tipo_operacion)
             line.append(str(apunte.date.strftime('%Y/%m/%d')))
             line.append(self.razonSocial(apunte.partner_id))
+            cat_line = ', '.join(category.name for category in apunte.partner_id.category_id)
+            line.append(cat_line)
             line.append(apunte.name)
             line.append(apunte.amount_residual)
             if cont_cliente == 1:
-                head = [self.razonSocial(apunte.partner_id),'','','','']
+                head = [self.razonSocial(apunte.partner_id),'','','','','']
                 formatted_lines.append(head)
                 cliente_start_index = len(formatted_lines)- 1
             formatted_lines.append(line)
             if siguiente_apunte is None or apunte.partner_id != siguiente_apunte.partner_id:
-                line2 = ['','','','',sum_cliente]
+                line2 = ['','','','','',sum_cliente]
                 formatted_lines.append(line2)
                 if sum_cliente < 0 and record.ignore_saldo:
                     del formatted_lines[cliente_start_index:cliente_start_index + cont_cliente + 2]  # +1 para incluir la línea del saldo
@@ -160,8 +166,7 @@ class CustomReportExport:
         'font_size': 12,  # Tamaño de fuente más grande
         'bold': True,
         'align': 'left',
-        'bg_color': '#c69c6d',
-        'font_color': 'white'})
+        'font_color': '#1d1d1b'})
         
         if self.record.type == 'cobrar':
             dataExcel= self.format_por_cobrar_excel(self.record)
@@ -177,11 +182,11 @@ class CustomReportExport:
                     worksheet.merge_range(row,0, row,3,line[0], client_header_format)
                     worksheet.set_row(row,20)
                     break
-                elif line[3] == '' and line[4] != '':
+                elif line[4] == '' and line[5] != '':
                     # Merge de las primeras cuatro celdas y escribir "Total"
-                    worksheet.merge_range(row,0, row,2,'Total', total_format)
+                    worksheet.merge_range(row,0, row,3,'Total', total_format)
                     # Escribir el valor del total en la quinta celda
-                    worksheet.write(row, 3, line[4], total_number_format)
+                    worksheet.write(row, 4, line[5], total_number_format)
                 else:
                     worksheet.write(row, col, item)
                 col += 1

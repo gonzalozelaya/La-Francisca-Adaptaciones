@@ -500,7 +500,7 @@ class DDJJExport:
                 formatted_line += str(comprobante_factura.date.strftime('%Y%m%d')).rjust(8,'0')           #Fecha de comprobante
                 formatted_line += '{:.2f}'.format(self.montoComprobante(comprobante_factura,2)).replace('.', '').rjust(12,'0')
                 formatted_line += str(self.nroSucursalProveedor(comprobante)).rjust(3,'0')
-                formatted_line += str(comprobante_factura.date.strftime('%Y%m')).rjust(6,'0')
+                formatted_line += str(apunte.date.strftime('%Y%m')).rjust(6,'0')
                 formatted_line += '0'
                 formatted_lines.append(formatted_line)
         return "\n".join(formatted_lines)
