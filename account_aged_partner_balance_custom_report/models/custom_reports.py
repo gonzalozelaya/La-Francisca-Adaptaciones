@@ -121,8 +121,7 @@ class CustomReportExport:
             comprobante = self.obtenerComprobante(apunte,tipo_operacion)
             line.append(str(apunte.date.strftime('%Y/%m/%d')))
             line.append(self.razonSocial(apunte.partner_id))
-            cat_line = ', '.join(category.name for category in apunte.partner_id.category_id)
-            line.append(cat_line)
+            line.append(apunte.partner_id.x_studio_zona)
             line.append(apunte.name)
             line.append(apunte.amount_residual)
             if cont_cliente == 1:

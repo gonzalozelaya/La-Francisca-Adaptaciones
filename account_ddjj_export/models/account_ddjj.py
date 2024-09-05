@@ -585,8 +585,8 @@ class DDJJExport:
             formatted_line = str(comprobante.date.strftime('%Y%m%d')).rjust(8,'0')           #Fecha de comprobante
             formatted_line += str(self.tipodeIdentificacionTucuman(apunte.partner_id)).ljust(2,'0')
             formatted_line += str(self.nrodeIdentificacion(apunte.partner_id)).rjust(11,'0')
-            formatted_line += str(self.tipoComprobanteTucuman(comprobante,tipo_operacion)).rjust(1)
-            formatted_line += str(self.tipoFactura(apunte,tipo_operacion)).rjust(2,'0')
+            formatted_line += str(self.tipoComprobanteTucuman(comprobante,tipo_operacion)).rjust(2)
+            formatted_line += str(self.tipoFactura(apunte,tipo_operacion)).rjust(1,'0')
             formatted_line += str(60).rjust(4,'0')  
             formatted_line += str(comprobante.sequence_number).rjust(8,'0')
             formatted_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,self.record.tax_group_id_ret_tucuman,tipo_operacion)).rjust(15, '0')
@@ -607,7 +607,7 @@ class DDJJExport:
                     formatted_line += str(comprobante.sequence_number).rjust(8,'0')
                     formatted_line += str(60).rjust(4,'0')
                     formatted_line += str(factura.sequence_number).rjust(8,'0')
-                    formatted_line += str(self.tipoComprobanteTucuman(comprobante,tipo_operacion)).rjust(1)
+                    formatted_line += str(self.tipoComprobanteTucuman(comprobante,tipo_operacion)).rjust(2)
                     formatted_lines.append(formatted_line)
         return "\n".join(formatted_lines)
 
@@ -923,13 +923,13 @@ class DDJJExport:
         if tipo_operacion == 1:
             return 99
         else:
-            comp = 1
+            comp = '01'
             if comprobante.move_type == 'out_invoice' or comprobante.move_type == 'in_invoice':
-                comp = 1
+                comp = '01'
             if comprobante.move_type == 'out_refund' or comprobante.move_type == 'in_refund':
-                comp = 3
+                comp = '03'
             if comprobante.move_type == 'out_receipt' or comprobante.move_type == 'in_receipt':
-                comp = 4
+                comp = '04'
             return comp
     def tipoComprobanteJujuy(self,comprobante,tipo_operacion):
         if tipo_operacion == 1:
