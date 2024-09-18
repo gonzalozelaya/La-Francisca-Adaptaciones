@@ -38,6 +38,7 @@ class AccountCustomReportAged(models.TransientModel):
         comodel_name='res.partner',  # Modelo relacionado
         string='Contacto',        # Nombre del campo
         help='Selecciona un contacto',
+        domain="[('credit', '>', 0)]",
     )
     
     apunte_ids = fields.Many2many(

@@ -298,7 +298,7 @@ class DDJJExport:
             format_line +='80'
             format_line += str(self.nrodeIdentificacion(comprobante.partner_id)).rjust(20,'0')
             format_line += (str(self.razonSocial(comprobante.partner_id))[:30] if len(str(self.razonSocial(comprobante.partner_id))) > 30 else str(self.razonSocial(comprobante.partner_id))).ljust(30,' ')
-            format_line += '{:.2f}'.format(self.montoComprobante(comprobante,2)).replace('.', '').rjust(15, '0')
+            format_line += '{:.2f}'.format(self.montoTotalIva(comprobante)).replace('.', '').rjust(15, '0')
             format_line += '{:.2f}'.format(self.IvaNoGravado(comprobante)).replace('.','').rjust(15,'0') #Conceptos que no integran el neto gravado - Pendiente
             format_line += '{:.2f}'.format(00000).replace('.','').rjust(15,'0') #Operaciones exentas
             format_line += '{:.2f}'.format(self.impuestoPercepcionesIVA(comprobante)).replace('.', '').rjust(15,'0')
@@ -319,6 +319,28 @@ class DDJJExport:
         formatted_lines.append('')
         return "\n".join(formatted_lines)
 
+    def montoTotalIva(self,comprobante):
+        impuestos = []
+        no_tax=True
+        for impuesto in comprobante.line_ids:
+            if impuesto.tax_group_id.l10n_ar_vat_afip_code:
+                amount_impuesto = impuesto.debit if impuesto.debit != 0 else impuesto.credit
+                amount_impuesto_neto = 0
+                if impuesto.tax_group_id.l10n_ar_vat_afip_code == '4':
+                    amount_impuesto_neto = amount_impuesto/0.105
+                    no_tax=False
+                elif impuesto.tax_group_id.l10n_ar_vat_afip_code == '5':
+                    amount_impuesto_neto = amount_impuesto/0.21
+                    no_tax=False
+                elif impuesto.tax_group_id.l10n_ar_vat_afip_code == '6':
+                    amount_impuesto_neto = amount_impuesto/0.27
+                    no_tax=False
+                impuestos.append(amount_impuesto + amount_impuesto_neto)
+            monto_total = sum(impuestos) + self.IvaNoGravado(comprobante) + self.impuestoPercepcionesIVA(comprobante) + self.IIBBIVA(comprobante) + self.impuestosMunicipales(comprobante) + self.impuestosInternos(comprobante)
+        if no_tax:
+            monto_total = comprobante.amount_total
+        return monto_total
+
     def format_iva_compras_alicuota_(self,record):
         formatted_lines = []
         for apunte in record.move_ids:
@@ -331,13 +353,25 @@ class DDJJExport:
                     format_line += str(comprobante.sequence_number).rjust(20,'0')
                     format_line +='80'
                     format_line += str(self.nrodeIdentificacion(comprobante.partner_id)).rjust(20,'0')
-                    format_line += '{:.2f}'.format(self.montoSujetoARetencion(comprobante,6,tipo_operacion)).replace('.','').rjust(15,'0')
+                    format_line += '{:.2f}'.format(self.MontoNetoAlicuota(line)).replace('.','').rjust(15,'0')
                     format_line += str(self.alicuotaDelIVA(line.tax_group_id)).rjust(4,'0')
-                    format_line += '{:.2f}'.format(line.debit).replace('.','').rjust(15,'0')
+                    amount = line.debit if line.debit != 0 else line.credit
+                    format_line += '{:.2f}'.format(amount).replace('.', '').rjust(15, '0')
                     formatted_lines.append(format_line)
         formatted_lines.append('')
         return "\r\n".join(formatted_lines)
 
+    def MontoNetoAlicuota(self,impuesto):
+        amount = impuesto.debit if impuesto.debit != 0 else impuesto.credit
+        if impuesto.tax_group_id.l10n_ar_vat_afip_code == '4':
+            return amount/0.105
+        elif impuesto.tax_group_id.l10n_ar_vat_afip_code == '5':
+            return amount/0.21
+        elif impuesto.tax_group_id.l10n_ar_vat_afip_code == '6':
+            return amount/0.27
+        else:
+            return 0
+        
     def alicuotaDelIVA(self, impuesto):
         return impuesto.l10n_ar_vat_afip_code
 
@@ -350,14 +384,16 @@ class DDJJExport:
         for line in comprobante.line_ids:
             if line.tax_group_id.l10n_ar_tribute_afip_code =='06':
                 sum += line.debit
+            
         return sum
 
     def IvaNoGravado(self,comprobante):
         sum = 0
+        no_tax = True
         for line in comprobante.line_ids:
-            if line.tax_group_id.id == 7:
+            if line.tax_group_id.l10n_ar_vat_afip_code == '1':
                 sum += line.debit
-                sum += line.credit
+
         return sum
     def IIBBIVA(self, comprobante):
         sum = 0
