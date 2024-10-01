@@ -290,7 +290,7 @@ class DDJJExport:
         for apunte in record.move_ids:
             tipo_operacion = 2
             comprobante = apunte
-            format_line = str(comprobante.date.strftime('%Y%m%d')).rjust(8,'0')           #Fecha de comprobante
+            format_line = str(comprobante.invoice_date.strftime('%Y%m%d')).rjust(8,'0')           #Fecha de comprobante
             format_line += str(self.tipoDocumentoIVA(comprobante)).rjust(3,'0')
             format_line += str(self.puntoDeVentaFactura(comprobante)).rjust(5,'0')
             format_line += str(comprobante.sequence_number).rjust(20,'0')
@@ -309,7 +309,7 @@ class DDJJExport:
             format_line +='PES'
             format_line +='0001000000'
             format_line += str(self.cantidadAlicuotasIVA(comprobante)).rjust(1,'0')
-            format_line += ' '
+            format_line += 'A'
             format_line += '{:.2f}'.format(self.creditoFiscalComputable(comprobante)).replace('.', '').rjust(15,'0')
             format_line += '{:.2f}'.format(00000).replace('.','').rjust(15,'0') #Otros tributos
             format_line += '{:.2f}'.format(00000).replace('.','').rjust(11,'0') #CUIT del emisor
@@ -323,7 +323,7 @@ class DDJJExport:
         impuestos = []
         no_tax=True
         for impuesto in comprobante.line_ids:
-            if impuesto.tax_group_id.l10n_ar_vat_afip_code:
+            if impuesto.tax_group_id.l10n_ar_vat_afip_code and impuesto.tax_group_id.l10n_ar_vat_afip_code not in ['1']:
                 amount_impuesto = impuesto.debit if impuesto.debit != 0 else impuesto.credit
                 amount_impuesto_neto = 0
                 if impuesto.tax_group_id.l10n_ar_vat_afip_code == '4':
@@ -341,6 +341,82 @@ class DDJJExport:
             monto_total = comprobante.amount_total
         return monto_total
 
+    def totales_cambiados(self,record):
+        formatted_lines = []
+        for apunte in record.move_ids:
+            tipo_operacion = 2
+            comprobante = apunte
+            if ('{:.2f}'.format(self.montoTotalIva(comprobante)) != '{:.2f}'.format(self.montoComprobante(comprobante,2))):
+                format_line = str(comprobante.invoice_date.strftime('%Y%m%d')).rjust(8,'0')           #Fecha de comprobante
+                format_line += str(self.puntoDeVentaFactura(comprobante)).rjust(5,'0')
+                format_line += str(comprobante.sequence_number).rjust(12,'0')
+                format_line += (str(self.razonSocial(comprobante.partner_id))[:30] if len(str(self.razonSocial(comprobante.partner_id))) > 30 else str(self.razonSocial(comprobante.partner_id))).ljust(30,' ')
+                format_line += ' Monto Sumado: '
+                format_line += '{:.2f}'.format(self.montoTotalIva(comprobante)).replace('.', '').rjust(15, '0')
+                format_line += ' Monto Original: '
+                format_line += '{:.2f}'.format(self.montoComprobante(comprobante,2)).replace('.', '').rjust(15, '0')
+                formatted_lines.append(format_line)
+        formatted_lines.append('')
+        return "\n".join(formatted_lines)
+    def totales_cambiados_excel(self, record):
+        output = BytesIO()
+        # Crear un archivo Excel y agregar una hoja
+        workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+        worksheet = workbook.add_worksheet()
+    
+        # Establecer formatos
+        bold = workbook.add_format({'bold': True})
+        money_format = workbook.add_format({'num_format': '#,##0.00'})
+        date_format = workbook.add_format({'num_format': 'yyyy-mm-dd'})
+        
+        # Encabezados
+        headers = ['Fecha Comprobante', 'Punto de Venta', 'Número de Comprobante', 'Razón Social', 'Monto Total Sumado', 'Monto Original','Diferencia']
+        for col_num, header in enumerate(headers):
+            worksheet.write(0, col_num, header, bold)
+    
+        # Filas de datos
+        row = 1
+        for apunte in record.move_ids:
+            tipo_operacion = 2
+            comprobante = apunte
+            if ('{:.2f}'.format(self.montoTotalIva(comprobante)) != '{:.2f}'.format(self.montoComprobante(comprobante, 2))):
+                # Fecha de comprobante
+                worksheet.write(row, 0, comprobante.invoice_date, date_format)
+                
+                # Punto de venta
+                worksheet.write(row, 1, str(self.puntoDeVentaFactura(comprobante)).rjust(5, '0'))
+                
+                # Número de comprobante
+                worksheet.write(row, 2, str(comprobante.sequence_number).rjust(12, '0'))
+                
+                # Razón social (limitada a 30 caracteres)
+                razon_social = str(self.razonSocial(comprobante.partner_id))[:30]
+                worksheet.write(row, 3, razon_social)
+                
+                # Monto Total IVA
+                worksheet.write(row, 4, float('{:.2f}'.format(self.montoTotalIva(comprobante))), money_format)
+                
+                # Monto Original
+                worksheet.write(row, 5, float('{:.2f}'.format(self.montoComprobante(comprobante, 2))), money_format)
+                #Diferencia
+                worksheet.write(row, 6, float('{:.2f}'.format(self.montoTotalIva(comprobante) - self.montoComprobante(comprobante, 2))), money_format)
+                
+                
+                row += 1
+        worksheet.set_column('A:A', 15)  # Ancho de la columna E
+        worksheet.set_column('B:B', 20)  # Ancho de la columna F
+        worksheet.set_column('C:C', 25)  # Ancho de la columna G
+        worksheet.set_column('D:D', 25)  # Ancho de la columna G
+        worksheet.set_column('E:E', 15)  # Ancho de la columna E
+        worksheet.set_column('F:F', 15)  # Ancho de la columna F
+        worksheet.set_column('G:G', 15)  # Ancho de la columna G
+        # Cerrar el archivo Excel
+        workbook.close()
+        output.seek(0)
+        file_data = base64.b64encode(output.read())
+        output.close()
+        return file_data
+        
     def format_iva_compras_alicuota_(self,record):
         formatted_lines = []
         for apunte in record.move_ids:
@@ -355,12 +431,11 @@ class DDJJExport:
                     format_line += str(self.nrodeIdentificacion(comprobante.partner_id)).rjust(20,'0')
                     format_line += '{:.2f}'.format(self.MontoNetoAlicuota(line)).replace('.','').rjust(15,'0')
                     format_line += str(self.alicuotaDelIVA(line.tax_group_id)).rjust(4,'0')
-                    amount = line.debit if line.debit != 0 else line.credit
-                    format_line += '{:.2f}'.format(amount).replace('.', '').rjust(15, '0')
+                    format_line += '{:.2f}'.format(line.debit if line.debit else line.credit).replace('.','').rjust(15,'0')
                     formatted_lines.append(format_line)
         formatted_lines.append('')
         return "\r\n".join(formatted_lines)
-
+        
     def MontoNetoAlicuota(self,impuesto):
         amount = impuesto.debit if impuesto.debit != 0 else impuesto.credit
         if impuesto.tax_group_id.l10n_ar_vat_afip_code == '4':
@@ -371,7 +446,6 @@ class DDJJExport:
             return amount/0.27
         else:
             return 0
-        
     def alicuotaDelIVA(self, impuesto):
         return impuesto.l10n_ar_vat_afip_code
 
@@ -383,8 +457,10 @@ class DDJJExport:
         sum = 0
         for line in comprobante.line_ids:
             if line.tax_group_id.l10n_ar_tribute_afip_code =='06':
-                sum += line.debit
-            
+                if line.debit != 0:
+                    sum += line.debit
+                else:
+                    sum += line.credit
         return sum
 
     def IvaNoGravado(self,comprobante):
@@ -393,26 +469,39 @@ class DDJJExport:
         for line in comprobante.line_ids:
             if line.tax_group_id.l10n_ar_vat_afip_code == '1':
                 sum += line.debit
-
+            if line.tax_group_id:
+                no_tax = False
+        if no_tax:
+            sum += comprobante.amount_total
         return sum
+        
     def IIBBIVA(self, comprobante):
         sum = 0
         for line in comprobante.line_ids:
             if line.tax_group_id.l10n_ar_tribute_afip_code == '07':
-                sum += line.debit
+                if line.debit != 0:
+                    sum += line.debit
+                else:
+                    sum += line.credit
         return sum
     def impuestosInternos(self,comprobante):
         sum = 0
         for line in comprobante.line_ids:
             if line.tax_group_id.l10n_ar_tribute_afip_code == '04':
-                sum += line.debit
+                if line.debit != 0:
+                    sum += line.debit
+                else: 
+                    sum += line.credit
         return sum
 
     def impuestosMunicipales(self,comprobante):
         sum = 0
         for line in comprobante.line_ids:
             if line.tax_group_id.l10n_ar_tribute_afip_code == '08':
-                sum += line.debit
+                if line.debit != 0:
+                    sum += line.debit
+                else:
+                    sum += line.credit
         return sum
     def cantidadAlicuotasIVA(self,comprobante):
         sum=0
@@ -424,7 +513,10 @@ class DDJJExport:
         sum=0
         for line in comprobante.line_ids:
             if line.tax_group_id.l10n_ar_vat_afip_code in ['3','4','5','6','7','8','9']:
-                sum += line.debit
+                if line.debit != 0:
+                    sum += line.debit
+                else:
+                    sum += line.credit
         return sum
 
     def format_line(self, record):
@@ -691,9 +783,12 @@ class DDJJExport:
         if self.record.municipalidad == 'iva':
             txt_content = self.format_iva_compras_cabecera(self.record)
             detalle_content = self.format_iva_compras_alicuota_(self.record)
+            totales_cambiados = self.totales_cambiados(self.record)
             # Codificar el contenido en base64
             file_content_base64 = base64.b64encode(txt_content.encode('utf-8')).decode('utf-8')
             detalle_content_base64 = base64.b64encode(detalle_content.encode('utf-8')).decode('utf-8')
+            totales_cambiados_content_base64 = base64.b64encode(totales_cambiados.encode('utf-8')).decode('utf-8')
+            file_data= self.totales_cambiados_excel(self.record)
             attachment = self.record.env['ir.attachment'].create({
                 'name': 'IVA_Compras_Cabecera.txt',
                 'type': 'binary',
@@ -706,7 +801,19 @@ class DDJJExport:
                 'datas': detalle_content_base64,
                 'mimetype': 'text/plain',
             })
-            return self.download_zip(self.record,[attachment.id,attachment2.id])
+            attachment3 = self.record.env['ir.attachment'].create({
+                'name': 'IVA_Compras_Totales_cambiados.txt',
+                'type': 'binary',
+                'datas': totales_cambiados_content_base64,
+                'mimetype': 'text/plain',
+            })
+            attachment4 = self.record.env['ir.attachment'].create({
+            'name': f"Totales_cambiados.xlsx",
+            'type': 'binary',
+            'datas': file_data,
+            'mimetype': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        })
+            return self.download_zip(self.record,[attachment.id,attachment2.id,attachment3.id,attachment4.id])
         if self.record.municipalidad == 'caba':
             if self.record.apuntes_a_mostrar == '4':
                 txt_content = self.format_line_credit(self.record)
