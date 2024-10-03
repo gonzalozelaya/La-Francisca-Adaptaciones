@@ -297,7 +297,8 @@ class DDJJExport:
             format_line += str(' ').rjust(16,' ')
             format_line +='80'
             format_line += str(self.nrodeIdentificacion(comprobante.partner_id)).rjust(20,'0')
-            format_line += (str(self.razonSocial(comprobante.partner_id))[:30] if len(str(self.razonSocial(comprobante.partner_id))) > 30 else str(self.razonSocial(comprobante.partner_id))).ljust(30,' ')
+            razon_social = str(self.razonSocial(comprobante.partner_id)).replace('Ñ', 'N').replace('ñ', 'n')
+            format_line += (razon_social[:30] if len(razon_social) > 30 else razon_social).ljust(30,' ')
             format_line += '{:.2f}'.format(self.montoTotalIva(comprobante)).replace('.', '').rjust(15, '0')
             format_line += '{:.2f}'.format(self.IvaNoGravado(comprobante)).replace('.','').rjust(15,'0') #Conceptos que no integran el neto gravado - Pendiente
             format_line += '{:.2f}'.format(00000).replace('.','').rjust(15,'0') #Operaciones exentas
@@ -423,7 +424,7 @@ class DDJJExport:
             tipo_operacion = 2
             comprobante = apunte
             for line in apunte.line_ids:
-                if line.tax_group_id.l10n_ar_vat_afip_code:
+                if line.tax_group_id.l10n_ar_vat_afip_code and line.tax_group_id.l10n_ar_vat_afip_code not in ['1','0','2']:
                     format_line = str(self.tipoDocumentoIVA(comprobante)).rjust(3,'0')
                     format_line += str(self.puntoDeVentaFactura(comprobante)).rjust(5,'0')
                     format_line += str(comprobante.sequence_number).rjust(20,'0')
